@@ -1,0 +1,4 @@
+[
+  { "id": "p1", "memberId": "m1", "amount": 49.99, "method": "card", "status": "succeeded", "date": "2025-01-05T10:00:00.000Z" },
+  { "id": "p2", "memberId": "m2", "amount": 59.99, "method": "cash", "status": "succeeded", "date": "2025-01-04T10:00:00.000Z" }
+]

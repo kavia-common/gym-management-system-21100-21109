@@ -1,0 +1,4 @@
+[
+  { "id": "b1", "memberId": "m1", "classId": "c1", "status": "confirmed", "createdAt": "2025-01-04T10:05:00.000Z" },
+  { "id": "b2", "memberId": "m2", "classId": "c2", "status": "waitlist", "createdAt": "2025-01-04T11:05:00.000Z" }
+]
