@@ -2,6 +2,15 @@
 
 This project provides a minimal React template with a clean, modern UI and minimal dependencies.
 
+## Auth Guards
+
+- ProtectedRoute: redirects unauthenticated users to `/login`, preserving the attempted path in `state.from`.
+- RoleGuard: restricts access to routes by role and redirects to the appropriate dashboard if the user lacks permission.
+
+Login and Register pages are wired to Redux `authSlice` to store `{ token, user, role }` and navigate to dashboards by role.
+
+When integrating a real backend, set `REACT_APP_API_BASE_URL` in your environment (see `src/api/httpClient.js`).
+
 ## Features
 
 - **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React

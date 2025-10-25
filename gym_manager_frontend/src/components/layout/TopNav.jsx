@@ -1,13 +1,26 @@
 import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import '../../styles/theme.css';
+import Button from '../ui/Button';
+import { logout } from '../../state/slices/authSlice';
 
 /**
  * TopNav aligned with Ocean Professional theme.
  * Includes a hamburger to toggle the responsive sidebar (dispatches 'toggle-sidenav' event).
  */
 export default function TopNav() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const user = useSelector((s) => s.auth.user);
+
   const toggleSidenav = () => {
     window.dispatchEvent(new CustomEvent('toggle-sidenav'));
+  };
+
+  const onLogout = () => {
+    dispatch(logout());
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -24,8 +37,9 @@ export default function TopNav() {
         <div className="topnav-brand">Gym Manager</div>
       </div>
       <div className="topnav-actions">
-        <span>Welcome</span>
+        <span>{user ? `Welcome, ${user.name}` : 'Welcome'}</span>
         <span style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--color-secondary)' }} />
+        {user ? <Button variant="secondary" onClick={onLogout}>Logout</Button> : null}
       </div>
     </header>
   );

@@ -2,6 +2,8 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
+import RoleGuard from '../components/auth/RoleGuard';
 
 // Lazy-loaded page components
 const Login = lazy(() => import('../pages/auth/Login'));
@@ -15,14 +17,12 @@ export default function AppRoutes() {
   /**
    * This component defines the top-level route tree for the application.
    * Routes:
-   * - /               -> Redirects to /login for now (no auth implemented yet)
+   * - /               -> Redirects to /login
    * - /login          -> Public login page
    * - /register       -> Public registration page
-   * - /owner/*        -> Owner portal routes inside MainLayout
-   * - /trainer/*      -> Trainer portal routes inside MainLayout
-   * - /member/*       -> Member portal routes inside MainLayout
-   *
-   * When auth is added, guards can be introduced to protect the portal routes.
+   * - /owner/*        -> Owner portal (protected, only owner role)
+   * - /trainer/*      -> Trainer portal (protected, only trainer role)
+   * - /member/*       -> Member portal (protected, only member role)
    */
   return (
     <Suspense fallback={<div className="container" style={{ padding: 24 }}>Loading...</div>}>
@@ -34,22 +34,38 @@ export default function AppRoutes() {
           <Route path="/register" element={<Register />} />
         </Route>
 
-        {/* Protected portals inside MainLayout (guards to be added later) */}
+        {/* Protected portals inside MainLayout */}
         <Route element={<MainLayout />}>
-          <Route path="/owner">
-            <Route index element={<OwnerDashboard />} />
-            {/* Future owner routes go here, e.g., <Route path="members" element={<OwnerMembers />} /> */}
-          </Route>
-
-          <Route path="/trainer">
-            <Route index element={<TrainerDashboard />} />
-            {/* Future trainer routes go here */}
-          </Route>
-
-          <Route path="/member">
-            <Route index element={<MemberDashboard />} />
-            {/* Future member routes go here */}
-          </Route>
+          <Route
+            path="/owner"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['owner']}>
+                  <OwnerDashboard />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trainer"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['trainer']}>
+                  <TrainerDashboard />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/member"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['member']}>
+                  <MemberDashboard />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         {/* Fallback */}
