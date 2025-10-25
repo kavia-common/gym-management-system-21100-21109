@@ -6,6 +6,7 @@ import SimpleTable from '../../components/shared/SimpleTable';
 import EntityForm from '../../components/shared/EntityForm';
 import endpoints from '../../api/endpoints';
 import { httpClient } from '../../api/httpClient';
+import { config } from '../../config';
 
 /**
  * PUBLIC_INTERFACE
@@ -17,7 +18,7 @@ export default function OwnerMembers() {
   const [open, setOpen] = React.useState(false);
   const [form, setForm] = React.useState({ name: '', email: '', status: 'active' });
 
-  const useMocks = String(process.env.REACT_APP_USE_MOCKS || '') === 'true';
+  const useMocks = config.useMocks;
 
   const fetchData = async () => {
     setLoading(true);

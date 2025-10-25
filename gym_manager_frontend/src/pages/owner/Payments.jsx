@@ -3,6 +3,7 @@ import Card from '../../components/ui/Card';
 import SimpleTable from '../../components/shared/SimpleTable';
 import endpoints from '../../api/endpoints';
 import { httpClient } from '../../api/httpClient';
+import { config } from '../../config';
 
 /**
  * PUBLIC_INTERFACE
@@ -11,7 +12,7 @@ import { httpClient } from '../../api/httpClient';
 export default function OwnerPayments() {
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
-  const useMocks = String(process.env.REACT_APP_USE_MOCKS || '') === 'true';
+  const useMocks = config.useMocks;
 
   const fetchData = async () => {
     setLoading(true);
@@ -24,7 +25,8 @@ export default function OwnerPayments() {
         await new Promise(r => setTimeout(r, 200));
         setItems(mock);
       } else {
-        const res = await httpClient.get('/payments'); // not in endpoints map yet
+        // not yet in endpoints map; keep direct path for now
+        const res = await httpClient.get('/payments');
         setItems(res.data || []);
       }
     } catch (e) {

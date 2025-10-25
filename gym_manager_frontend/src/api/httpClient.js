@@ -1,15 +1,15 @@
 import axios from 'axios';
 import { store } from '../state/store';
+import { config } from '../config';
 
 /**
  * PUBLIC_INTERFACE
- * getBaseURL - Reads API base URL from environment variables.
+ * getBaseURL - Reads API base URL from centralized config.
  * CRA uses REACT_APP_ prefix for env variables.
  */
 export function getBaseURL() {
-  // Note: Ensure REACT_APP_API_BASE_URL is set in the environment (.env)
-  const url = process.env.REACT_APP_API_BASE_URL || '';
-  return url.replace(/\/+$/, ''); // trim trailing slash
+  // Central source of truth for base URL
+  return config.apiBaseUrl;
 }
 
 /**
@@ -25,14 +25,14 @@ export const httpClient = axios.create({
 
 // Attach Authorization header if token exists
 httpClient.interceptors.request.use(
-  (config) => {
+  (reqConfig) => {
     const state = store.getState();
     const token = state?.auth?.token;
     if (token) {
       // eslint-disable-next-line no-param-reassign
-      config.headers.Authorization = `Bearer ${token}`;
+      reqConfig.headers.Authorization = `Bearer ${token}`;
     }
-    return config;
+    return reqConfig;
   },
   (error) => Promise.reject(error)
 );
