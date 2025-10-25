@@ -25,9 +25,20 @@ export default function SideNav() {
   }, [location.pathname]);
 
   const links = [
-    { to: '/owner', label: 'Owner Dashboard', icon: '🏛️' },
-    { to: '/trainer', label: 'Trainer Dashboard', icon: '🏋️' },
-    { to: '/member', label: 'Member Dashboard', icon: '🧑‍🤝‍🧑' },
+    { to: '/owner', label: 'Owner', icon: '🏛️' },
+    { to: '/owner/members', label: '• Members', icon: '' },
+    { to: '/owner/classes', label: '• Classes', icon: '' },
+    { to: '/owner/trainers', label: '• Trainers', icon: '' },
+    { to: '/owner/payments', label: '• Payments', icon: '' },
+    { to: '/owner/analytics', label: '• Analytics', icon: '' },
+    { to: '/trainer', label: 'Trainer', icon: '🏋️' },
+    { to: '/trainer/timetable', label: '• Timetable', icon: '' },
+    { to: '/trainer/clients', label: '• Clients', icon: '' },
+    { to: '/trainer/programs', label: '• Programs', icon: '' },
+    { to: '/member', label: 'Member', icon: '🧑‍🤝‍🧑' },
+    { to: '/member/bookings', label: '• Bookings', icon: '' },
+    { to: '/member/classes', label: '• Classes', icon: '' },
+    { to: '/member/profile', label: '• Profile', icon: '' },
   ];
 
   return (

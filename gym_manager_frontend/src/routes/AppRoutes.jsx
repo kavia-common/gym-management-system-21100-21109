@@ -9,20 +9,26 @@ import RoleGuard from '../components/auth/RoleGuard';
 const Login = lazy(() => import('../pages/auth/Login'));
 const Register = lazy(() => import('../pages/auth/Register'));
 const OwnerDashboard = lazy(() => import('../pages/owner/Dashboard'));
+const OwnerMembers = lazy(() => import('../pages/owner/Members'));
+const OwnerClasses = lazy(() => import('../pages/owner/Classes'));
+const OwnerTrainers = lazy(() => import('../pages/owner/Trainers'));
+const OwnerPayments = lazy(() => import('../pages/owner/Payments'));
+const OwnerAnalytics = lazy(() => import('../pages/owner/Analytics'));
+
 const TrainerDashboard = lazy(() => import('../pages/trainer/Dashboard'));
+const TrainerTimetable = lazy(() => import('../pages/trainer/Timetable'));
+const TrainerClients = lazy(() => import('../pages/trainer/Clients'));
+const TrainerPrograms = lazy(() => import('../pages/trainer/Programs'));
+
 const MemberDashboard = lazy(() => import('../pages/member/Dashboard'));
+const MemberBookings = lazy(() => import('../pages/member/Bookings'));
+const MemberClasses = lazy(() => import('../pages/member/Classes'));
+const MemberProfile = lazy(() => import('../pages/member/Profile'));
 
 // PUBLIC_INTERFACE
 export default function AppRoutes() {
   /**
-   * This component defines the top-level route tree for the application.
-   * Routes:
-   * - /               -> Redirects to /login
-   * - /login          -> Public login page
-   * - /register       -> Public registration page
-   * - /owner/*        -> Owner portal (protected, only owner role)
-   * - /trainer/*      -> Trainer portal (protected, only trainer role)
-   * - /member/*       -> Member portal (protected, only member role)
+   * Route tree with nested role portals.
    */
   return (
     <Suspense fallback={<div className="container" style={{ padding: 24 }}>Loading...</div>}>
@@ -36,6 +42,7 @@ export default function AppRoutes() {
 
         {/* Protected portals inside MainLayout */}
         <Route element={<MainLayout />}>
+          {/* Owner */}
           <Route
             path="/owner"
             element={
@@ -47,6 +54,58 @@ export default function AppRoutes() {
             }
           />
           <Route
+            path="/owner/members"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['owner']}>
+                  <OwnerMembers />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/classes"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['owner']}>
+                  <OwnerClasses />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/trainers"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['owner']}>
+                  <OwnerTrainers />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/payments"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['owner']}>
+                  <OwnerPayments />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/analytics"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['owner']}>
+                  <OwnerAnalytics />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Trainer */}
+          <Route
             path="/trainer"
             element={
               <ProtectedRoute>
@@ -57,11 +116,73 @@ export default function AppRoutes() {
             }
           />
           <Route
+            path="/trainer/timetable"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['trainer']}>
+                  <TrainerTimetable />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trainer/clients"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['trainer']}>
+                  <TrainerClients />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trainer/programs"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['trainer']}>
+                  <TrainerPrograms />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Member */}
+          <Route
             path="/member"
             element={
               <ProtectedRoute>
                 <RoleGuard allow={['member']}>
                   <MemberDashboard />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/member/bookings"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['member']}>
+                  <MemberBookings />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/member/classes"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['member']}>
+                  <MemberClasses />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/member/profile"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['member']}>
+                  <MemberProfile />
                 </RoleGuard>
               </ProtectedRoute>
             }

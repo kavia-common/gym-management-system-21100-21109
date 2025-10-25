@@ -1,10 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 
-/**
- * Placeholder Member Dashboard page.
- * Replace with bookings, classes, and progress tracking.
- */
 export default function MemberDashboard() {
   return (
     <div style={{ display: 'grid', gap: 16 }}>
@@ -13,6 +10,13 @@ export default function MemberDashboard() {
         <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
           Access your classes, bookings, and progress.
         </p>
+      </Card>
+      <Card title="Quick Links" subtitle="Go to">
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Link to="/member/bookings" className="btn btn-secondary">Bookings</Link>
+          <Link to="/member/classes" className="btn btn-secondary">Classes</Link>
+          <Link to="/member/profile" className="btn btn-secondary">Profile</Link>
+        </div>
       </Card>
     </div>
   );
