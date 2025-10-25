@@ -42,4 +42,8 @@ export const config = {
   apiBaseUrl: getApiBaseUrl(),
   useMocks: getUseMocks(),
   featureFlags: getFeatureFlags(),
+
+  // Supabase related (read-only exposure to aid debugging)
+  supabaseUrl: getEnvVar('REACT_APP_SUPABASE_URL', ''),
+  supabaseAnonKey: getEnvVar('REACT_APP_SUPABASE_ANON_KEY', ''),
 };

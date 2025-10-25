@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { authFailure, authSuccess, startAuth } from '../../state/slices/authSlice';
+import { getSupabaseClient } from '../../lib/supabaseClient';
 
 /**
  * Register page integrated with Redux auth.
@@ -20,25 +21,66 @@ export default function Register() {
   const [password, setPassword] = React.useState('');
   const [role, setRole] = React.useState('member');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(startAuth());
 
-    setTimeout(() => {
+    try {
       if (!name || !email || !password) {
         dispatch(authFailure('All fields are required.'));
         return;
       }
 
-      const fakeToken = 'mock-jwt-token';
-      const user = { id: 'u_2', name, role };
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin + '/auth/callback',
+          data: {
+            name,
+            role, // store minimal role in user_metadata
+          },
+        },
+      });
 
-      dispatch(authSuccess({ user, token: fakeToken }));
+      if (error) {
+        dispatch(authFailure(error.message || 'Failed to register.'));
+        return;
+      }
 
-      if (role === 'owner') navigate('/owner', { replace: true });
-      else if (role === 'trainer') navigate('/trainer', { replace: true });
-      else navigate('/member', { replace: true });
-    }, 600);
+      // Depending on project settings, signUp may require email confirmation.
+      // If session is present immediately, log user in, else show message and navigate to login.
+      const session = data?.session;
+      const profile = data?.user || session?.user;
+      if (session && profile) {
+        const token = session?.access_token || null;
+        const derivedRole =
+          profile?.app_metadata?.role ||
+          profile?.user_metadata?.role ||
+          role ||
+          'member';
+
+        const user = {
+          id: profile.id,
+          name: profile.user_metadata?.name || name || profile.email || 'User',
+          email: profile.email || email,
+          role: derivedRole,
+        };
+
+        dispatch(authSuccess({ user, token }));
+        if (derivedRole === 'owner') navigate('/owner', { replace: true });
+        else if (derivedRole === 'trainer') navigate('/trainer', { replace: true });
+        else navigate('/member', { replace: true });
+      } else {
+        // No session -> likely email confirmation required
+        dispatch(authFailure(null));
+        alert('Check your email to confirm your account, then sign in.');
+        navigate('/login', { replace: true });
+      }
+    } catch (err) {
+      dispatch(authFailure(err?.message || 'Failed to register.'));
+    }
   };
 
   return (
@@ -69,9 +111,24 @@ export default function Register() {
           <div style={{ color: 'var(--color-error)', fontSize: 13 }}>{error}</div>
         ) : null}
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <Button variant="primary" type="submit" disabled={status === 'loading'}>
             {status === 'loading' ? 'Creating...' : 'Sign Up'}
+          </Button>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={async () => {
+              const supabase = getSupabaseClient();
+              await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                  redirectTo: window.location.origin + '/auth/callback',
+                },
+              });
+            }}
+          >
+            Continue with Google
           </Button>
           <Link to="/login" className="btn btn-ghost" style={{ alignSelf: 'center' }}>Already have an account?</Link>
         </div>

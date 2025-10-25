@@ -11,6 +11,16 @@ Login and Register pages are wired to Redux `authSlice` to store `{ token, user,
 
 When integrating a real backend, set `REACT_APP_API_BASE_URL` in your environment (see `src/api/httpClient.js`).
 
+## Supabase Auth
+- Install: `npm install @supabase/supabase-js`
+- Env vars: set `REACT_APP_SUPABASE_URL` and `REACT_APP_SUPABASE_ANON_KEY` (see `.env.example`).
+- The app provides:
+  - Email/Password login via `supabase.auth.signInWithPassword`
+  - Registration via `supabase.auth.signUp` (stores minimal `name` and `role` in user metadata)
+  - Google OAuth via `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/auth/callback' } })`
+  - Callback route at `/auth/callback` to capture sessions
+- Ensure the Supabase Dashboard > Authentication > URL Configuration includes the callback URL: `http://localhost:3000/auth/callback` (and your deployed origin).
+
 ## Features
 
 - **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
