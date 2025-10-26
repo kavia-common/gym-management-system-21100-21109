@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import '../../styles/theme.css';
+import Logo from './Logo';
 
 /**
  * SideNav aligned with Ocean Professional theme.
@@ -48,9 +49,10 @@ export default function SideNav() {
         aria-label="Sidebar navigation"
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderBottom: '1px solid var(--color-border)' }}>
-          <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>
-            {collapsed ? 'GM' : 'Modules'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Logo size={18} />
+            {!collapsed && <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>Modules</span>}
+          </div>
           <button
             className="btn btn-ghost"
             style={{ padding: '6px 8px' }}

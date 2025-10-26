@@ -4,7 +4,8 @@ import React from 'react';
  * PUBLIC_INTERFACE
  * EnvBanner
  * This component renders a global banner warning if required Supabase environment variables
- * are missing at runtime. It adheres to the Ocean Professional theme and masks the anon key.
+ * are missing at runtime. It adheres to the Ocean Professional color palette and masks the anon key,
+ * but never renders the literal theme name in the UI.
  *
  * Usage:
  *   <EnvBanner />
@@ -28,12 +29,12 @@ function EnvBanner() {
     if (!key) return 'N/A';
     const str = String(key);
     const visible = str.slice(-4);
-    return `••••••••••••••••••••••••••••${visible}`;
+    return `••••••••••••••••••••••••${visible}`;
   };
 
   if (!showBanner) return null;
 
-  // Ocean Professional Theme Colors
+  // Ocean Professional Theme Colors (colors only; do not display theme text)
   const colors = {
     primary: '#2563EB', // blue
     secondary: '#F59E0B', // amber
