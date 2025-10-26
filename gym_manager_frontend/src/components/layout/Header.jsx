@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 /**
  * PUBLIC_INTERFACE
  * Header renders a simple top navigation with auth-aware actions.
- * - When logged out: Login, Signup
+ * - When logged out: Home, Plans, Get Started, Login, Sign up
  * - When logged in: Dashboard, Logout
  */
 export default function Header() {
@@ -41,6 +41,12 @@ export default function Header() {
           Gym Manager
         </Link>
 
+        <nav style={{ display: 'flex', gap: 12, marginLeft: 16 }}>
+          <Link to="/" style={{ textDecoration: 'none', color: '#374151' }}>Home</Link>
+          <Link to="/plans" style={{ textDecoration: 'none', color: '#374151' }}>Plans</Link>
+          <Link to="/get-started" style={{ textDecoration: 'none', color: '#374151' }}>Get Started</Link>
+        </nav>
+
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
           {!user ? (
             <>
@@ -55,14 +61,18 @@ export default function Header() {
                 Login
               </Link>
               <Link
-                to="/signup"
+                to="/get-started"
                 style={{
                   textDecoration: 'none',
-                  color: '#F59E0B',
+                  color: '#ffffff',
+                  background: '#2563EB',
+                  padding: '8px 12px',
+                  borderRadius: 8,
                   fontWeight: 600,
                 }}
+                aria-label="Start registration"
               >
-                Signup
+                Sign up
               </Link>
             </>
           ) : (

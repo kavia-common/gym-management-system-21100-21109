@@ -6,6 +6,8 @@ import ProtectedRoute from '../components/auth/ProtectedRoute';
 import RoleGuard from '../components/auth/RoleGuard';
 // New register wizard page (non-lazy to avoid code-split issues on critical path)
 import RegisterWizardPage from '../pages/auth/RegisterWizard.jsx';
+// New RoleSelect page
+import RoleSelect from '../pages/auth/RoleSelect.jsx';
 
 // Marketing pages
 import Home from '../pages/marketing/Home';
@@ -41,7 +43,7 @@ const MemberProfile = lazy(() => import('../pages/member/Profile'));
 export default function AppRoutes() {
   /**
    * Route tree with public marketing page and nested role portals.
-   * Adds plans and new registration wizard route.
+   * Adds plans and new registration wizard route, and /get-started role selection.
    */
   return (
     <Suspense fallback={<div className="container" style={{ padding: 24 }}>Loading...</div>}>
@@ -55,6 +57,7 @@ export default function AppRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<RegisterLegacy />} />
           <Route path="/register-legacy" element={<RegisterLegacy />} />
+          <Route path="/get-started" element={<RoleSelect />} />
           <Route path="/register" element={<RegisterWizardPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />

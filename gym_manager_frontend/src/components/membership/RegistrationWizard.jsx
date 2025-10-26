@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import PlanComparison from './PlanComparison';
 import Input from '../ui/Input.jsx';
 import Button from '../ui/Button.jsx';
+import { Link } from 'react-router-dom';
 
 /**
  * PUBLIC_INTERFACE
@@ -14,10 +15,32 @@ import Button from '../ui/Button.jsx';
  * 4. Review
  * 5. Proceed to payment (placeholder)
  *
+ * Enhancements:
+ * - Reads role from localStorage 'registration.role' and shows role-specific subtitle and a header chip.
+ * - Provides a 'Change' link back to /get-started to switch roles.
  * - Prefills or skips Account step if user is logged in via Supabase Auth context
  * - Persists in-progress state in localStorage to protect against refresh
  * - Validates required fields and shows accessible error messages
  */
+
+const ROLE_COPY = {
+  member: {
+    subtitle:
+      'You’re signing up as a Member. Book classes, manage your membership, and track your progress.',
+    chip: 'Member',
+  },
+  trainer: {
+    subtitle:
+      'You’re signing up as a Trainer. Create classes, manage clients, and access performance tools.',
+    chip: 'Trainer',
+  },
+  owner: {
+    subtitle:
+      'You’re signing up as an Admin/Owner. Manage operations, memberships, trainers, and analytics.',
+    chip: 'Admin/Owner',
+  },
+};
+
 export default function RegistrationWizard() {
   const { session, signUp, loading: authLoading } = useAuth() || {};
   const userEmail = session?.user?.email || '';
@@ -27,6 +50,16 @@ export default function RegistrationWizard() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
   const [statusMsg, setStatusMsg] = useState('');
+
+  // Role pulled once on mount; defaults to member
+  const selectedRole = useMemo(() => {
+    try {
+      return localStorage.getItem('registration.role') || 'member';
+    } catch {
+      return 'member';
+    }
+  }, []);
+  const roleCopy = ROLE_COPY[selectedRole] || ROLE_COPY.member;
 
   // Form State
   const [account, setAccount] = useState({ email: '', password: '' });
@@ -256,6 +289,16 @@ export default function RegistrationWizard() {
       <div>
         <h2 style={{ marginTop: 0, color: '#111827' }}>Personal details</h2>
         <p style={{ color: '#6b7280' }}>Tell us a bit about you.</p>
+        {selectedRole === 'trainer' && (
+          <p style={{ fontSize: 12, color: '#92400e', background: '#fffbeb', borderRadius: 8, padding: '8px 12px', marginBottom: 8 }}>
+            Trainer tip: You can add certifications and availability later in your profile.
+          </p>
+        )}
+        {selectedRole === 'owner' && (
+          <p style={{ fontSize: 12, color: '#92400e', background: '#fffbeb', borderRadius: 8, padding: '8px 12px', marginBottom: 8 }}>
+            Admin/Owner note: You can invite trainers and set up payments after sign up.
+          </p>
+        )}
         <div style={{ display: 'grid', gap: 12 }}>
           <label>
             <span className="sr-only">First name</span>
@@ -304,6 +347,9 @@ export default function RegistrationWizard() {
       <div>
         <h2 style={{ marginTop: 0, color: '#111827' }}>Choose your plan</h2>
         <p style={{ color: '#6b7280' }}>Compare features to find the perfect fit.</p>
+        {selectedRole !== 'member' && (
+          <p style={{ fontSize: 12, color: '#6b7280' }}>As {roleCopy.chip}, plan options may differ or be optional.</p>
+        )}
         {errors.plan && <div role="alert" style={{ color: '#EF4444', marginBottom: 12 }}>{errors.plan}</div>}
         <PlanComparison
           plans={plans}
@@ -335,8 +381,11 @@ export default function RegistrationWizard() {
           aria-label="Review details"
         >
           <dl style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 8, margin: 0 }}>
+            <dt style={{ color: '#6b7280' }}>Role</dt>
+            <dd style={{ margin: 0, color: '#111827' }}>{roleCopy.chip}</dd>
+
             <dt style={{ color: '#6b7280' }}>Email</dt>
-            <dd style={{ margin: 0, color: '#111827' }}>{account.email || userEmail || '—'}</dd>
+            <dd style={{ margin: 0, color: '#111827' }}>{account.email || userEmail || '\u2014'}</dd>
 
             <dt style={{ color: '#6b7280' }}>Name</dt>
             <dd style={{ margin: 0, color: '#111827' }}>
@@ -348,7 +397,7 @@ export default function RegistrationWizard() {
 
             <dt style={{ color: '#6b7280' }}>Plan</dt>
             <dd style={{ margin: 0, color: '#111827' }}>
-              {plan ? `${plan.name} — $${plan.price}/${plan.interval}` : '—'}
+              {plan ? `${plan.name} — $${plan.price}/${plan.interval}` : '\u2014'}
             </dd>
           </dl>
         </div>
@@ -397,7 +446,10 @@ export default function RegistrationWizard() {
         >
           <strong style={{ color: '#111827' }}>Order summary</strong>
           <div style={{ marginTop: 8, color: '#374151' }}>
-            Plan: {plan ? plan.name : '—'} — ${plan ? plan.price : '—'} / {plan ? plan.interval : '—'}
+            Role: {roleCopy.chip}
+          </div>
+          <div style={{ marginTop: 4, color: '#374151' }}>
+            Plan: {plan ? plan.name : '\u2014'} — ${plan ? plan.price : '\u2014'} / {plan ? plan.interval : '\u2014'}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -439,14 +491,46 @@ export default function RegistrationWizard() {
     borderRadius: 16,
     border: '1px solid #dbeafe',
   };
+  const roleChipStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '2px 8px',
+    borderRadius: 999,
+    background: '#dbeafe',
+    color: '#1d4ed8',
+    fontSize: 12,
+    fontWeight: 700,
+    marginLeft: 8,
+  };
 
   return (
     <div style={containerStyle}>
       <div style={headerStyle}>
-        <h1 style={{ margin: 0, color: '#111827' }}>Membership Registration</h1>
-        <p style={{ margin: '6px 0 0', color: '#6b7280' }}>
-          Ocean Professional experience — smooth, clear, and secure.
-        </p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <h1 style={{ margin: 0, color: '#111827' }}>Membership Registration</h1>
+              <span aria-label={`Selected role ${roleCopy.chip}`} style={roleChipStyle}>{roleCopy.chip}</span>
+              <Link
+                to="/get-started"
+                style={{ marginLeft: 8, fontSize: 12, color: '#2563EB', textDecoration: 'underline' }}
+                aria-label="Change selected role"
+              >
+                Change
+              </Link>
+            </div>
+            <p style={{ margin: '6px 0 0', color: '#6b7280' }}>
+              {roleCopy.subtitle}
+            </p>
+            <p style={{ margin: '4px 0 0', color: '#9ca3af', fontSize: 12 }}>
+              Fields and options may adapt to your role in future steps.
+            </p>
+          </div>
+          <div style={{ color: '#6b7280', fontSize: 14, whiteSpace: 'nowrap' }}>
+            Step {step + 1} of {totalSteps}
+          </div>
+        </div>
       </div>
       {renderStepper()}
       <div style={cardStyle}>
