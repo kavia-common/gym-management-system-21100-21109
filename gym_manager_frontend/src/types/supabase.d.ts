@@ -1,12 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+declare module '*.svg' {
+  const content: string;
+  export default content;
+}
 
 /**
- * Ambient declaration for the Supabase client export.
- * This helps TypeScript-aware tooling in mixed JS/TS codebases.
+ * Ambient declaration so JS files importing the TS client get proper types in editors.
  */
-
-declare module 'src/lib/supabaseClient' {
-  import type { SupabaseClient } from '@supabase/supabase-js';
-  // PUBLIC_INTERFACE
-  export const supabase: SupabaseClient<any, 'public', any>;
+declare module '../lib/supabaseClient' {
+  export const supabase: SupabaseClient;
+  const defaultExport: SupabaseClient;
+  export default defaultExport;
+  export function getSupabaseClient(): SupabaseClient;
 }
