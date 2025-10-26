@@ -5,6 +5,9 @@ import AuthLayout from '../layouts/AuthLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import RoleGuard from '../components/auth/RoleGuard';
 
+// Marketing Home page (non-lazy to ensure immediate load for landing)
+import Home from '../pages/marketing/Home';
+
 // Lazy-loaded page components
 const Login = lazy(() => import('../pages/auth/Login'));
 const Register = lazy(() => import('../pages/auth/Register'));
@@ -28,14 +31,19 @@ const MemberProfile = lazy(() => import('../pages/member/Profile'));
 // PUBLIC_INTERFACE
 export default function AppRoutes() {
   /**
-   * Route tree with nested role portals.
+   * Route tree with public marketing page and nested role portals.
+   * - Home (/) is public and outside of Auth/Main layouts.
+   * - Auth routes are within AuthLayout.
+   * - Protected portals are within MainLayout.
    */
   return (
     <Suspense fallback={<div className="container" style={{ padding: 24 }}>Loading...</div>}>
       <Routes>
+        {/* Public Marketing Route */}
+        <Route path="/" element={<Home />} />
+
         {/* Public routes within AuthLayout */}
         <Route element={<AuthLayout />}>
-          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Route>
@@ -190,7 +198,7 @@ export default function AppRoutes() {
         </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );
