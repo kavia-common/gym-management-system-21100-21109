@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/theme.css';
 import Button from '../ui/Button';
 import { logout } from '../../state/slices/authSlice';
-import { config } from '../../config';
 import { supabase } from '../../lib/supabaseClient';
 
 /**
@@ -22,7 +21,7 @@ export default function TopNav() {
 
   const onLogout = async () => {
     try {
-      if (!config.useMocks && supabase) {
+      if (supabase) {
         await supabase.auth.signOut();
       }
     } catch (e) {

@@ -4,12 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { authFailure, authSuccess, startAuth } from '../../state/slices/authSlice';
-import { config } from '../../config';
 import { supabase } from '../../lib/supabaseClient';
 
 /**
- * Register page integrated with Redux auth.
- * Uses Supabase signUp in real mode; mock fallback otherwise.
+ * PUBLIC_INTERFACE
+ * Register page using Supabase signUp exclusively.
+ * If email confirmation is enabled (no session), navigates user to login after showing info message.
  */
 export default function Register() {
   const dispatch = useDispatch();
@@ -20,56 +20,37 @@ export default function Register() {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [role, setRole] = React.useState('member');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(startAuth());
 
-    // Mock mode
-    if (config.useMocks || !supabase) {
-      setTimeout(() => {
-        if (!name || !email || !password) {
-          dispatch(authFailure('All fields are required.'));
-          return;
-        }
-        const fakeToken = 'mock-jwt-token';
-        const user = { id: 'u_2', name, role, email };
-        dispatch(authSuccess({ user, token: fakeToken }));
-
-        if (role === 'owner') navigate('/owner', { replace: true });
-        else if (role === 'trainer') navigate('/trainer', { replace: true });
-        else navigate('/member', { replace: true });
-      }, 400);
-      return;
-    }
-
-    // Real mode
     if (!name || !email || !password) {
       dispatch(authFailure('All fields are required.'));
       return;
     }
+
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error: sbError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             name,
-            role, // 'owner' | 'trainer' | 'member'
+            // Default new users to member role; owners/trainers can be promoted server-side.
+            role: 'member',
           },
         },
       });
 
-      if (error) {
-        dispatch(authFailure(error.message || 'Registration failed.'));
+      if (sbError) {
+        dispatch(authFailure(sbError.message || 'Registration failed.'));
         return;
       }
 
-      // Note: If email confirmation is enabled, no session is returned.
-      const session = data.session;
-      const profile = data.user;
+      const session = data?.session || null;
+      const profile = data?.user || null;
 
       if (!session) {
         // Inform user to verify email and then sign in
@@ -82,7 +63,7 @@ export default function Register() {
       const resolvedRole =
         profile?.app_metadata?.role ||
         profile?.user_metadata?.role ||
-        role || 'member';
+        'member';
 
       const user = {
         id: profile?.id,
@@ -110,20 +91,6 @@ export default function Register() {
         <Input label="Full Name" placeholder="Jane Doe" value={name} onChange={(e) => setName(e.target.value)} />
         <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         <Input label="Password" type="password" placeholder="Create a password" value={password} onChange={(e) => setPassword(e.target.value)} />
-
-        <div style={{ display: 'grid', gap: 6 }}>
-          <label htmlFor="role" style={{ fontWeight: 600, fontSize: 14 }}>Register as</label>
-          <select
-            id="role"
-            className="input"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-          >
-            <option value="owner">Owner</option>
-            <option value="trainer">Trainer</option>
-            <option value="member">Member</option>
-          </select>
-        </div>
 
         {error ? (
           <div style={{ color: 'var(--color-error)', fontSize: 13 }}>{error}</div>

@@ -4,12 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { authFailure, authSuccess, startAuth } from '../../state/slices/authSlice';
-import { config } from '../../config';
 import { supabase } from '../../lib/supabaseClient';
 
 /**
- * Login page integrated with Redux auth.
- * Uses Supabase email/password in real mode; falls back to mock role selector if REACT_APP_USE_MOCKS=true.
+ * PUBLIC_INTERFACE
+ * Login page which uses Supabase email/password authentication exclusively.
+ * Shows clear error messages returned by Supabase and handles loading state.
  */
 export default function Login() {
   const dispatch = useDispatch();
@@ -20,7 +20,6 @@ export default function Login() {
 
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [role, setRole] = React.useState('member'); // used only in mock mode
 
   const from = location.state?.from?.pathname;
 
@@ -28,45 +27,24 @@ export default function Login() {
     e.preventDefault();
     dispatch(startAuth());
 
-    // Mock mode: keep existing simulated behavior
-    if (config.useMocks || !supabase) {
-      setTimeout(() => {
-        if (!email || !password) {
-          dispatch(authFailure('Email and password are required.'));
-          return;
-        }
-        const fakeToken = 'mock-jwt-token';
-        const user = { id: 'u_1', name: 'Demo User', role, email };
-        dispatch(authSuccess({ user, token: fakeToken }));
-
-        if (from) {
-          navigate(from, { replace: true });
-          return;
-        }
-        if (role === 'owner') navigate('/owner', { replace: true });
-        else if (role === 'trainer') navigate('/trainer', { replace: true });
-        else navigate('/member', { replace: true });
-      }, 300);
-      return;
-    }
-
-    // Real mode with Supabase
     if (!email || !password) {
       dispatch(authFailure('Email and password are required.'));
       return;
     }
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error: sbError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) {
-        dispatch(authFailure(error.message || 'Invalid credentials.'));
+
+      if (sbError) {
+        dispatch(authFailure(sbError.message || 'Invalid credentials.'));
         return;
       }
-      const session = data.session;
-      const profile = data.user;
+
+      const session = data?.session || null;
+      const profile = data?.user || null;
       const token = session?.access_token || null;
 
       const resolvedRole =
@@ -116,22 +94,6 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {/* Role selector visible only in mock mode */}
-        { (config.useMocks || !supabase) && (
-          <div style={{ display: 'grid', gap: 6 }}>
-            <label htmlFor="role" style={{ fontWeight: 600, fontSize: 14 }}>Login as</label>
-            <select
-              id="role"
-              className="input"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              <option value="owner">Owner</option>
-              <option value="trainer">Trainer</option>
-              <option value="member">Member</option>
-            </select>
-          </div>
-        )}
 
         {error ? (
           <div style={{ color: 'var(--color-error)', fontSize: 13 }}>{error}</div>

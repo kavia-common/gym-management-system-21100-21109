@@ -2,43 +2,54 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { authSuccess } from '../../state/slices/authSlice';
-import { getCurrentSession } from '../../lib/authStub';
+import { supabase } from '../../lib/supabaseClient';
 
 /**
  * PUBLIC_INTERFACE
- * AuthCallback - Stubbed callback page. No external API calls.
- * Reads session from local storage and routes accordingly. If missing, routes to /login.
+ * AuthCallback - Handles redirect after verification or magic link if applicable.
+ * Reads current Supabase session and routes accordingly. If missing, routes to /login.
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   React.useEffect(() => {
-    const stub = getCurrentSession();
-    if (stub) {
-      const role = stub?.role || 'member';
-      dispatch(
-        authSuccess({
-          token: 'local-stub-token',
-          user: {
-            id: 'stub-user',
-            name: stub?.name || 'Local User',
-            email: stub?.email || '',
-            role,
-          },
-        })
-      );
-      if (role === 'owner') navigate('/owner', { replace: true });
-      else if (role === 'trainer') navigate('/trainer', { replace: true });
-      else navigate('/member', { replace: true });
-      return;
-    }
-    navigate('/login', { replace: true });
+    const run = async () => {
+      const { data } = await supabase.auth.getSession();
+      const session = data?.session || null;
+      const profile = session?.user || null;
+
+      if (session && profile) {
+        const resolvedRole =
+          profile?.app_metadata?.role ||
+          profile?.user_metadata?.role ||
+          'member';
+
+        dispatch(
+          authSuccess({
+            token: session?.access_token || null,
+            user: {
+              id: profile?.id,
+              name: profile?.user_metadata?.name || profile?.email || 'User',
+              email: profile?.email || '',
+              role: resolvedRole,
+            },
+          })
+        );
+
+        if (resolvedRole === 'owner') navigate('/owner', { replace: true });
+        else if (resolvedRole === 'trainer') navigate('/trainer', { replace: true });
+        else navigate('/member', { replace: true });
+        return;
+      }
+      navigate('/login', { replace: true });
+    };
+    run();
   }, [dispatch, navigate]);
 
   return (
     <div className="container" style={{ padding: 24 }}>
-      Completing sign-in (stub)...
+      Completing sign-in...
     </div>
   );
 }
