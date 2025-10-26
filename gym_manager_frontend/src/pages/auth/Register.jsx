@@ -5,11 +5,15 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { authFailure, authSuccess, startAuth } from '../../state/slices/authSlice';
 import { supabase } from '../../lib/supabaseClient';
+import { profilesService } from '../../services/supabase';
 
 /**
  * PUBLIC_INTERFACE
- * Register page using Supabase signUp exclusively.
- * If email confirmation is enabled (no session), navigates user to login after showing info message.
+ * Register page using Supabase signUp.
+ * Adds role selector with rules:
+ * - member -> status active
+ * - trainer -> status pending; requires owner approval
+ * - owner -> only allowed if no existing owner profile
  */
 export default function Register() {
   const dispatch = useDispatch();
@@ -20,6 +24,32 @@ export default function Register() {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [role, setRole] = React.useState('member');
+  const [roleMsg, setRoleMsg] = React.useState('');
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      if (role === 'owner') {
+        try {
+          const exists = await profilesService.ownerExists();
+          if (!cancelled) {
+            setRoleMsg(exists ? 'An owner already exists. Owner registration is disabled.' : 'Registering as the first owner.');
+          }
+        } catch {
+          if (!cancelled) setRoleMsg('Unable to verify owner availability.');
+        }
+      } else if (role === 'trainer') {
+        setRoleMsg('Trainer accounts require owner approval. Your status will be pending after registration.');
+      } else {
+        setRoleMsg('');
+      }
+    };
+    check();
+    return () => {
+      cancelled = true;
+    };
+  }, [role]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,6 +61,15 @@ export default function Register() {
     }
 
     try {
+      // Enforce single owner before sign up
+      if (role === 'owner') {
+        const exists = await profilesService.ownerExists();
+        if (exists) {
+          dispatch(authFailure('Registration blocked: An owner already exists.'));
+          return;
+        }
+      }
+
       const { data, error: sbError } = await supabase.auth.signUp({
         email,
         password,
@@ -38,8 +77,7 @@ export default function Register() {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             name,
-            // Default new users to member role; owners/trainers can be promoted server-side.
-            role: 'member',
+            role,
           },
         },
       });
@@ -50,25 +88,44 @@ export default function Register() {
       }
 
       const session = data?.session || null;
-      const profile = data?.user || null;
+      const authUser = data?.user || null;
+
+      // Create profile row with role/status
+      if (authUser?.id) {
+        try {
+          await profilesService.create({
+            id: authUser.id,
+            name,
+            email: authUser.email || email,
+            role,
+          });
+        } catch (pfErr) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to create profile row', pfErr);
+        }
+      }
 
       if (!session) {
         // Inform user to verify email and then sign in
-        dispatch(authFailure('Registration successful. Please check your email to confirm your account, then sign in.'));
+        dispatch(authFailure(role === 'trainer'
+          ? 'Registration successful. Please verify your email. Your trainer account will be pending approval by the owner after you sign in.'
+          : 'Registration successful. Please check your email to confirm your account, then sign in.'
+        ));
         navigate('/login', { replace: true });
         return;
       }
 
       const token = session?.access_token || null;
       const resolvedRole =
-        profile?.app_metadata?.role ||
-        profile?.user_metadata?.role ||
+        authUser?.app_metadata?.role ||
+        authUser?.user_metadata?.role ||
+        role ||
         'member';
 
       const user = {
-        id: profile?.id,
-        name: profile?.user_metadata?.name || name,
-        email: profile?.email || email,
+        id: authUser?.id,
+        name: authUser?.user_metadata?.name || name,
+        email: authUser?.email || email,
         role: resolvedRole,
       };
 
@@ -102,6 +159,21 @@ export default function Register() {
         <Input label="Full Name" placeholder="Jane Doe" value={name} onChange={(e) => setName(e.target.value)} />
         <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         <Input label="Password" type="password" placeholder="Create a password" value={password} onChange={(e) => setPassword(e.target.value)} />
+
+        <div style={{ display: 'grid', gap: 6 }}>
+          <label htmlFor="role" style={{ fontWeight: 600, fontSize: 14 }}>Role</label>
+          <select
+            id="role"
+            className="input"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+          >
+            <option value="member">Member</option>
+            <option value="trainer">Trainer</option>
+            <option value="owner">Owner</option>
+          </select>
+          {roleMsg ? <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{roleMsg}</div> : null}
+        </div>
 
         {error ? (
           <div style={{ color: 'var(--color-error)', fontSize: 13 }}>{error}</div>

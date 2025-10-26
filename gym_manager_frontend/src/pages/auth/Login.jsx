@@ -5,11 +5,12 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { authFailure, authSuccess, startAuth } from '../../state/slices/authSlice';
 import { supabase } from '../../lib/supabaseClient';
+import { profilesService } from '../../services/supabase';
 
 /**
  * PUBLIC_INTERFACE
  * Login page which uses Supabase email/password authentication exclusively.
- * Shows clear error messages returned by Supabase and handles loading state.
+ * After auth, fetches profile to validate role/status. Trainers must be 'active'.
  */
 export default function Login() {
   const dispatch = useDispatch();
@@ -22,6 +23,7 @@ export default function Login() {
   const [password, setPassword] = React.useState('');
 
   const from = location.state?.from?.pathname;
+  const incomingMsg = location.state?.msg;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,19 +46,38 @@ export default function Login() {
       }
 
       const session = data?.session || null;
-      const profile = data?.user || null;
+      const authUser = data?.user || null;
       const token = session?.access_token || null;
 
+      // Fetch profile for role/status
+      let profileRow = null;
+      try {
+        profileRow = authUser?.id ? await profilesService.getById(authUser.id) : null;
+      } catch (pfErr) {
+        // eslint-disable-next-line no-console
+        console.warn('Profile not found; proceeding with auth metadata only', pfErr);
+      }
+
       const resolvedRole =
-        profile?.app_metadata?.role ||
-        profile?.user_metadata?.role ||
+        profileRow?.role ||
+        authUser?.app_metadata?.role ||
+        authUser?.user_metadata?.role ||
         'member';
 
+      const statusVal = profileRow?.status || (resolvedRole === 'trainer' ? 'pending' : 'active');
+
+      // Block trainer if not active
+      if (resolvedRole === 'trainer' && statusVal !== 'active') {
+        dispatch(authFailure('Your trainer account is pending approval. Please wait for the owner to approve your access.'));
+        return;
+      }
+
       const user = {
-        id: profile?.id,
-        name: profile?.user_metadata?.name || profile?.email || 'User',
-        email: profile?.email || email,
+        id: authUser?.id,
+        name: authUser?.user_metadata?.name || profileRow?.name || authUser?.email || 'User',
+        email: authUser?.email || email,
         role: resolvedRole,
+        status: statusVal,
       };
 
       dispatch(authSuccess({ user, token }));
@@ -89,6 +110,7 @@ export default function Login() {
     <div>
       <h2 style={{ marginTop: 0 }}>Login</h2>
       <p style={{ color: 'var(--color-text-muted)' }}>Enter your credentials to access your dashboard.</p>
+      {incomingMsg ? <div style={{ background: '#EFF6FF', color: '#1D4ED8', padding: 10, borderRadius: 6, margin: '8px 0' }}>{incomingMsg}</div> : null}
       {envWarning}
 
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12, marginTop: 12 }}>

@@ -4,12 +4,13 @@ import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import SimpleTable from '../../components/shared/SimpleTable';
 import EntityForm from '../../components/shared/EntityForm';
-import { trainersService } from '../../services/supabase';
+import { trainersService, profilesService } from '../../services/supabase';
 import { config } from '../../config';
 
 /**
  * PUBLIC_INTERFACE
  * OwnerTrainers - Manage trainers via Supabase with CRUD and pagination.
+ * Adds Pending Approvals section to approve or reject trainer accounts.
  */
 export default function OwnerTrainers() {
   const [items, setItems] = React.useState([]);
@@ -20,6 +21,10 @@ export default function OwnerTrainers() {
   const [form, setForm] = React.useState({ name: '', specialty: '', email: '' });
   const [page, setPage] = React.useState(1);
   const [hasNext, setHasNext] = React.useState(false);
+
+  const [pending, setPending] = React.useState([]);
+  const [pendingLoading, setPendingLoading] = React.useState(false);
+  const [pendingError, setPendingError] = React.useState('');
 
   const useMocks = config.useMocks;
 
@@ -45,8 +50,27 @@ export default function OwnerTrainers() {
     }
   };
 
+  const loadPending = async () => {
+    setPendingLoading(true);
+    setPendingError('');
+    try {
+      if (useMocks) {
+        setPending([]);
+        setPendingError('Supabase disabled (mock mode). Disable mocks to load real data.');
+      } else {
+        const data = await profilesService.listTrainersByStatus('pending');
+        setPending(data);
+      }
+    } catch (e) {
+      setPendingError(e?.message || 'Failed to fetch pending trainers');
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
   React.useEffect(() => {
     load(1);
+    loadPending();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,10 +124,36 @@ export default function OwnerTrainers() {
     }
   };
 
+  const onApprove = async (p) => {
+    if (useMocks) return;
+    try {
+      await profilesService.approveTrainer(p.id);
+      setPending((prev) => prev.filter((it) => it.id !== p.id));
+    } catch (e) {
+      setPendingError(e?.message || 'Failed to approve trainer');
+    }
+  };
+
+  const onReject = async (p) => {
+    if (useMocks) return;
+    try {
+      await profilesService.rejectTrainer(p.id);
+      setPending((prev) => prev.filter((it) => it.id !== p.id));
+    } catch (e) {
+      setPendingError(e?.message || 'Failed to reject trainer');
+    }
+  };
+
   const columns = [
     { key: 'name', label: 'Name' },
     { key: 'specialty', label: 'Specialty' },
     { key: 'email', label: 'Email' },
+  ];
+
+  const pendingColumns = [
+    { key: 'name', label: 'Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'status', label: 'Status' },
   ];
 
   const fields = [
@@ -119,23 +169,32 @@ export default function OwnerTrainers() {
     </div>
   );
 
-  const onPrimaryAction = async () => {
-    if (editing) {
-      await onUpdate({ ...editing, ...form });
-      setOpen(false);
-      onResetForm();
-    } else {
-      await onCreate();
-    }
-  };
-
   return (
     <div style={{ display: 'grid', gap: 16 }}>
+      <Card
+        title="Pending Trainer Approvals"
+        subtitle="Approve or reject trainer access requests"
+        action={<Button variant="secondary" onClick={loadPending}>Refresh</Button>}
+      >
+        {pendingError ? <div style={{ color: 'var(--color-error)', marginBottom: 8 }}>{pendingError}</div> : null}
+        <SimpleTable
+          columns={pendingColumns}
+          data={pending}
+          loading={pendingLoading}
+          actions={(row) => (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Button size="sm" onClick={() => onApprove(row)}>Approve</Button>
+              <Button size="sm" variant="ghost" onClick={() => onReject(row)}>Reject</Button>
+            </div>
+          )}
+        />
+      </Card>
+
       <Card
         title="Trainers"
         subtitle="Manage your trainers"
         action={<div style={{ display: 'flex', gap: 8 }}>
-          <Button onClick={() => { onResetForm(); setOpen(true); }}>Add Trainer</Button>
+          <Button onClick={() => { setEditing(null); setForm({ name: '', specialty: '', email: '' }); setOpen(true); }}>Add Trainer</Button>
           <Button variant="secondary" onClick={() => load(1)}>Refresh</Button>
         </div>}
       >
@@ -151,9 +210,9 @@ export default function OwnerTrainers() {
       <Modal
         open={open}
         title={editing ? 'Edit Trainer' : 'Add Trainer'}
-        onClose={() => { setOpen(false); onResetForm(); }}
-        primaryAction={<Button onClick={onPrimaryAction}>{editing ? 'Update' : 'Save'}</Button>}
-        secondaryAction={<Button variant="secondary" onClick={() => { setOpen(false); onResetForm(); }}>Cancel</Button>}
+        onClose={() => { setOpen(false); setEditing(null); setForm({ name: '', specialty: '', email: '' }); }}
+        primaryAction={<Button onClick={async () => { if (editing) { await (async () => { await trainersService.update(editing.id, { ...editing, ...form }); await load(page); setOpen(false); setEditing(null); })(); } else { await onCreate(); } }}>{editing ? 'Update' : 'Save'}</Button>}
+        secondaryAction={<Button variant="secondary" onClick={() => { setOpen(false); setEditing(null); setForm({ name: '', specialty: '', email: '' }); }}>Cancel</Button>}
       >
         <EntityForm fields={fields} values={form} onChange={setForm} />
       </Modal>
