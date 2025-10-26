@@ -1,52 +1,45 @@
 import supabase from '../../lib/supabaseClient';
-import { config } from '../../config';
+
+// Re-export client for convenience in consumers that import from helpers
+export { default as supabase } from '../../lib/supabaseClient';
 
 /**
  * PUBLIC_INTERFACE
- * tableNames - Centralized Supabase table name constants.
+ * tableNames - Centralized table name mapping to avoid typos across services.
  */
 export const tableNames = {
-  members: 'members',
-  trainers: 'trainers',
-  classes: 'classes',
   bookings: 'bookings',
-  programs: 'programs',
+  classes: 'classes',
+  members: 'members',
   payments: 'payments',
-  profiles: 'profiles', // generic user profile table if present
+  profiles: 'profiles',
+  programs: 'programs',
+  trainers: 'trainers',
 };
 
 /**
  * PUBLIC_INTERFACE
- * assertSupabaseReady - Throws if Supabase is not initialized.
+ * assertSupabaseReady - Throws a helpful error if env vars are missing.
  */
 export function assertSupabaseReady() {
-  if (!supabase || config.useMocks) {
-    throw new Error('[Supabase] Client unavailable or mock mode enabled. Disable mocks and set REACT_APP_SUPABASE_URL/REACT_APP_SUPABASE_ANON_KEY.');
+  const url = import.meta?.env?.VITE_SUPABASE_URL || process.env?.VITE_SUPABASE_URL;
+  const key = import.meta?.env?.VITE_SUPABASE_ANON_KEY || process.env?.VITE_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error(
+      'Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.'
+    );
   }
 }
 
 /**
  * PUBLIC_INTERFACE
- * paginate - Builds range parameters and returns normalized pagination meta.
+ * handle - Normalizes Supabase responses and throws errors with context.
  */
-export function paginate({ page = 1, limit = 20 } = {}) {
-  const p = Math.max(1, Number(page) || 1);
-  const l = Math.min(100, Math.max(1, Number(limit) || 20));
-  const from = (p - 1) * l;
-  const to = from + l - 1;
-  return { from, to, meta: { page: p, limit: l } };
-}
-
-/**
- * PUBLIC_INTERFACE
- * handle - Standard Supabase error handling wrapper.
- */
-export function handle(result, action = 'operation') {
+export function handle(result, context = 'operation') {
   const { data, error, count } = result || {};
   if (error) {
-    const err = new Error(error.message || `Supabase ${action} failed`);
+    const err = new Error(error.message || `Failed to ${context}`);
     err.code = error.code;
-    err.details = error.details;
     throw err;
   }
   return { data, count };
@@ -54,9 +47,44 @@ export function handle(result, action = 'operation') {
 
 /**
  * PUBLIC_INTERFACE
- * withCount - Helper to add count: 'exact' to a query for total records.
+ * paginate - Calculates range indices for Supabase range() and returns meta.
+ */
+export function paginate({ page = 1, limit = 20 } = {}) {
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeLimit = Math.max(1, Number(limit) || 20);
+  const from = (safePage - 1) * safeLimit;
+  const to = from + safeLimit - 1;
+  return {
+    from,
+    to,
+    meta: {
+      page: safePage,
+      limit: safeLimit,
+    },
+  };
+}
+
+/**
+ * PUBLIC_INTERFACE
+ * withCount - Ensures select includes count metadata where applicable.
+ * Usage: withCount(supabase.from('table').select('*, ...', { count: 'exact' }))
  */
 export function withCount(query) {
-  // Some queries (select) can request a count for pagination
-  return query.select('*', { count: 'exact' });
+  // If developer hasn't specified select yet, we apply a default select with count
+  // Supabase JS supports calling select multiple times; the last wins.
+  try {
+    return query.select('*', { count: 'exact' });
+  } catch {
+    return query;
+  }
+}
+
+/**
+ * PUBLIC_INTERFACE
+ * getProfileById - Helper to fetch a profile by user id
+ */
+export async function getProfileById(userId) {
+  const { data, error } = await supabase.from(tableNames.profiles).select('*').eq('id', userId).single();
+  if (error) throw error;
+  return data;
 }
