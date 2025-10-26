@@ -10,7 +10,8 @@ import { supabase } from './lib/supabaseClient';
 import { authSuccess, logout } from './state/slices/authSlice';
 
 async function enableMocksIfNeeded() {
-  if (config.useMocks) {
+  // Only initialize MSW when explicitly enabled via env toggle
+  if (String(process.env.REACT_APP_USE_MOCKS) === 'true' || config.useMocks === true) {
     try {
       const { worker } = await import('./mocks/browser');
       // Start the worker and allow unhandled requests to pass through

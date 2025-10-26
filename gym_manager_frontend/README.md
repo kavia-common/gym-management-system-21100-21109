@@ -9,7 +9,25 @@ This project provides a minimal React template with a clean, modern UI and minim
 
 Login and Register pages are wired to Redux `authSlice` to store `{ token, user, role }` and navigate to dashboards by role.
 
-When integrating a real backend, set `REACT_APP_API_BASE_URL` in your environment (see `src/api/httpClient.js`). The app supports a mock mode with `REACT_APP_USE_MOCKS=true` and does not include any Supabase integration.
+When integrating a real backend you have two modes:
+
+1) Real Supabase mode (default)
+- Set the following environment variables:
+  - REACT_APP_SUPABASE_URL
+  - REACT_APP_SUPABASE_ANON_KEY
+- Ensure `REACT_APP_USE_MOCKS=false` (this is the default in `.env.example`).
+- The app uses Supabase services from `src/services/supabase/*` via `src/lib/supabaseClient.js`.
+- API calls should go through these Supabase services rather than custom HTTP clients.
+
+2) Mock mode (MSW)
+- Toggle by setting `REACT_APP_USE_MOCKS=true`.
+- On startup, `src/index.js` will dynamically import and start the MSW worker (`src/mocks/browser.js`) and register handlers from `src/mocks/handlers.js`.
+- This mode does not require Supabase credentials and returns seeded in-memory data from `src/mocks/data/*`.
+
+Notes:
+- `src/index.js` guards MSW initialization and only starts it when `REACT_APP_USE_MOCKS === 'true'`.
+- For real Supabase mode, provide valid Supabase env values; otherwise, the Supabase client will not be created and auth hydration is skipped.
+- Legacy REST endpoints in `src/api/endpoints.js` and axios `src/api/httpClient.js` are retained for reference but new data flows should prefer Supabase services where available.
 
 ## Features
 

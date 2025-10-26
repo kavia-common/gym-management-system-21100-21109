@@ -19,7 +19,7 @@ export function getApiBaseUrl() {
 
 // PUBLIC_INTERFACE
 export function getUseMocks() {
-  /** Returns boolean flag indicating if mock mode is enabled (REACT_APP_USE_MOCKS === 'true'). */
+  /** Returns boolean flag indicating if mock mode is enabled (REACT_APP_USE_MOCKS === 'true'); defaults to false. */
   return String(getEnvVar('REACT_APP_USE_MOCKS', 'false')) === 'true';
 }
 

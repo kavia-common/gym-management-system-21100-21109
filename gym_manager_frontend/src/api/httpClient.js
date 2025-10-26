@@ -15,6 +15,7 @@ export function getBaseURL() {
 /**
  * PUBLIC_INTERFACE
  * httpClient - Pre-configured Axios instance with baseURL and interceptors.
+ * NOTE: Prefer using Supabase services in src/services/supabase/* when available.
  */
 export const httpClient = axios.create({
   baseURL: getBaseURL(),
