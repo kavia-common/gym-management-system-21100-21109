@@ -4,7 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/theme.css';
 import Button from '../ui/Button';
 import { logout } from '../../state/slices/authSlice';
-import { supabase } from '../../lib/supabaseClient';
+
+let supabase = null;
+try {
+  // eslint-disable-next-line global-require
+  supabase = require('../../lib/supabaseClient').supabase;
+} catch {
+  // ignore, show minimal UI
+}
 
 /**
  * TopNav aligned with Ocean Professional theme.

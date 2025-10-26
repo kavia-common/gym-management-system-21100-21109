@@ -6,8 +6,21 @@ import './index.css';
 import App from './App';
 import { store } from './state/store';
 import { config } from './config';
-import { supabase } from './lib/supabaseClient';
 import { authSuccess, logout } from './state/slices/authSlice';
+
+let supabase = null;
+
+// Try to import supabase client and handle missing envs gracefully
+try {
+  // eslint-disable-next-line global-require
+  supabase = require('./lib/supabaseClient').supabase;
+} catch (e) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[Supabase] Client not initialized. Auth features will be disabled until environment variables are provided.',
+    e?.message || e
+  );
+}
 
 async function enableMocksIfNeeded() {
   // Only initialize MSW when explicitly enabled via env toggle

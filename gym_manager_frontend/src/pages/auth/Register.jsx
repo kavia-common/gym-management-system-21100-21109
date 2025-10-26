@@ -82,10 +82,21 @@ export default function Register() {
     }
   };
 
+  // Defensive UI if envs are missing and client failed to init (module would have thrown).
+  let envWarning = null;
+  if (!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY) {
+    envWarning = (
+      <div style={{ background: '#FFF7ED', color: '#9A3412', padding: 10, borderRadius: 6, margin: '8px 0' }}>
+        Supabase is not configured. Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in your environment.
+      </div>
+    );
+  }
+
   return (
     <div>
       <h2 style={{ marginTop: 0 }}>Register</h2>
       <p style={{ color: 'var(--color-text-muted)' }}>Create your Gym Manager account.</p>
+      {envWarning}
 
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12, marginTop: 12 }}>
         <Input label="Full Name" placeholder="Jane Doe" value={name} onChange={(e) => setName(e.target.value)} />
