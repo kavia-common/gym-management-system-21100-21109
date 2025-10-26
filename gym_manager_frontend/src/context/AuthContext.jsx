@@ -1,4 +1,7 @@
-// Authentication Context: provides user/session and listens for Supabase auth changes.
+/**
+ * Authentication Context: provides user/session and listens for Supabase auth changes.
+ * Defensively handles environments without Supabase env vars by operating in no-auth mode.
+ */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import supabase, { getCurrentSession } from '../lib/supabaseClient';
 
@@ -33,15 +36,32 @@ export function AuthProvider({ children }) {
       }
     })();
 
-    // Subscribe to auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user || null);
-    });
+    // Only subscribe when a real Supabase client is present
+    const canSubscribe =
+      supabase &&
+      !supabase.__noop &&
+      supabase.auth &&
+      typeof supabase.auth.onAuthStateChange === 'function';
+
+    let unsubscribe = null;
+
+    if (canSubscribe) {
+      const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user || null);
+      });
+      unsubscribe = authListener?.subscription?.unsubscribe?.bind(authListener?.subscription) || null;
+    }
 
     return () => {
       mounted = false;
-      authListener?.subscription?.unsubscribe?.();
+      if (typeof unsubscribe === 'function') {
+        try {
+          unsubscribe();
+        } catch {
+          // ignore
+        }
+      }
     };
   }, []);
 

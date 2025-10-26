@@ -2,6 +2,7 @@
  * Supabase Services - Centralized exports.
  * Ensures all imports are at the top to satisfy ESLint import/first rule,
  * and re-exports service modules in a clean, consolidated manner.
+ * The supabase client exported here is always defined (real or safe no-op).
  */
 
 // imports (top only)

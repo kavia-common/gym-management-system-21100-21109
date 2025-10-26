@@ -34,7 +34,14 @@ async function enableMocksIfNeeded() {
 
 async function hydrateAuthFromSupabase() {
   // Skip in mock mode or if client is not usable
-  if (config.useMocks || !supabase || !supabase.auth || typeof supabase.auth.getSession !== 'function') {
+  const unusable =
+    config.useMocks ||
+    !supabase ||
+    supabase.__noop ||
+    !supabase.auth ||
+    typeof supabase.auth.getSession !== 'function';
+
+  if (unusable) {
     return;
   }
 
@@ -64,7 +71,10 @@ async function hydrateAuthFromSupabase() {
     }
 
     // Subscribe to auth state changes if available
-    if (typeof supabase.auth.onAuthStateChange === 'function') {
+    if (
+      !supabase.__noop &&
+      typeof supabase.auth.onAuthStateChange === 'function'
+    ) {
       supabase.auth.onAuthStateChange((_event, newSession) => {
         if (newSession?.user) {
           const u = newSession.user;
