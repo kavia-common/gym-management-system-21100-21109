@@ -9,19 +9,7 @@ import { config } from './config';
 import { authSuccess, logout } from './state/slices/authSlice';
 import { AuthProvider } from './context/AuthContext';
 
-let supabase = null;
-
-// Try to import supabase client and handle missing envs gracefully
-try {
-  // eslint-disable-next-line global-require
-  supabase = require('./lib/supabaseClient').supabase;
-} catch (e) {
-  // eslint-disable-next-line no-console
-  console.warn(
-    '[Supabase] Client not initialized. Auth features will be disabled until environment variables are provided.',
-    e?.message || e
-  );
-}
+import supabase from './lib/supabaseClient';
 
 async function enableMocksIfNeeded() {
   // Only initialize MSW when explicitly enabled via env toggle
