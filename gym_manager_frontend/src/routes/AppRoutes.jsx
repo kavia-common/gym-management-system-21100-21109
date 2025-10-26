@@ -8,7 +8,6 @@ import RoleGuard from '../components/auth/RoleGuard';
 // Lazy-loaded page components
 const Login = lazy(() => import('../pages/auth/Login'));
 const Register = lazy(() => import('../pages/auth/Register'));
-const AuthCallback = lazy(() => import('../pages/auth/AuthCallback'));
 const OwnerDashboard = lazy(() => import('../pages/owner/Dashboard'));
 const OwnerMembers = lazy(() => import('../pages/owner/Members'));
 const OwnerClasses = lazy(() => import('../pages/owner/Classes'));
@@ -39,7 +38,6 @@ export default function AppRoutes() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
         </Route>
 
         {/* Protected portals inside MainLayout */}

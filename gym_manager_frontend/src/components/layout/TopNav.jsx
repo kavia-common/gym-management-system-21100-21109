@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/theme.css';
 import Button from '../ui/Button';
 import { logout } from '../../state/slices/authSlice';
-import { clearAuthStorage, getCurrentRole } from '../../lib/authStub';
 
 /**
  * TopNav aligned with Ocean Professional theme.
@@ -14,16 +13,12 @@ export default function TopNav() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((s) => s.auth.user);
-  const role = user?.role || getCurrentRole();
 
   const toggleSidenav = () => {
     window.dispatchEvent(new CustomEvent('toggle-sidenav'));
   };
 
   const onLogout = () => {
-    try {
-      clearAuthStorage();
-    } catch {}
     dispatch(logout());
     navigate('/login', { replace: true });
   };
@@ -43,7 +38,6 @@ export default function TopNav() {
       </div>
       <div className="topnav-actions">
         <span>{user ? `Welcome, ${user.name}` : 'Welcome'}</span>
-        {role ? <span style={{ color: 'var(--color-text-muted)' }}>({role})</span> : null}
         <span style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--color-secondary)' }} />
         {user ? <Button variant="secondary" onClick={onLogout}>Logout</Button> : null}
       </div>

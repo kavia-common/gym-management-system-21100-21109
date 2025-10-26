@@ -9,22 +9,7 @@ This project provides a minimal React template with a clean, modern UI and minim
 
 Login and Register pages are wired to Redux `authSlice` to store `{ token, user, role }` and navigate to dashboards by role.
 
-Auth helper:
-- A lightweight, backend-free stub lives at `src/lib/authStub.js` and is used by guards and auth pages for demo flows.
-- It persists a minimal session in localStorage and derives roles from email (e.g., emails containing "owner" become owner).
-- When you integrate a real backend, replace usages with your real auth utilities.
-
 When integrating a real backend, set `REACT_APP_API_BASE_URL` in your environment (see `src/api/httpClient.js`).
-
-## Supabase Auth
-- Install: `npm install @supabase/supabase-js`
-- Env vars: set `REACT_APP_SUPABASE_URL` and `REACT_APP_SUPABASE_ANON_KEY` (see `.env.example`).
-- The app provides:
-  - Email/Password login via `supabase.auth.signInWithPassword`
-  - Registration via `supabase.auth.signUp` (stores minimal `name` and `role` in user metadata)
-  - Google OAuth via `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/auth/callback' } })`
-  - Callback route at `/auth/callback` to capture sessions
-- Ensure the Supabase Dashboard > Authentication > URL Configuration includes the callback URL: `http://localhost:3000/auth/callback` (and your deployed origin).
 
 ## Features
 

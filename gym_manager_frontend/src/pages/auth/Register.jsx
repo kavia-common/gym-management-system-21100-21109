@@ -4,12 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { authFailure, authSuccess, startAuth } from '../../state/slices/authSlice';
-import { setCurrentSession, setRoleForEmail } from '../../lib/authStub';
 
 /**
- * Register (stubbed - no backend)
- * - Stores a local stub auth state and navigates by selected role.
- * - Only shows Trainer/Member options (Owner must not be selectable).
+ * Register page integrated with Redux auth.
+ * It simulates a registration flow, sets auth state, and redirects by chosen role.
  */
 export default function Register() {
   const dispatch = useDispatch();
@@ -20,38 +18,33 @@ export default function Register() {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [role, setRole] = React.useState('member'); // default to member
+  const [role, setRole] = React.useState('member');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     dispatch(startAuth());
 
-    try {
+    setTimeout(() => {
       if (!name || !email || !password) {
         dispatch(authFailure('All fields are required.'));
         return;
       }
 
-      // Persist role by email and set current session
-      setRoleForEmail(email, role);
-      setCurrentSession({ email, role, name });
+      const fakeToken = 'mock-jwt-token';
+      const user = { id: 'u_2', name, role };
 
-      const user = { id: 'stub-user', name, email, role };
-      dispatch(authSuccess({ user, token: 'local-stub-token' }));
+      dispatch(authSuccess({ user, token: fakeToken }));
 
-      if (role === 'trainer') navigate('/trainer', { replace: true });
-      else navigate('/member', { replace: true }); // default path
-    } catch (err) {
-      dispatch(authFailure(err?.message || 'Failed to register.'));
-    }
+      if (role === 'owner') navigate('/owner', { replace: true });
+      else if (role === 'trainer') navigate('/trainer', { replace: true });
+      else navigate('/member', { replace: true });
+    }, 600);
   };
 
   return (
     <div>
       <h2 style={{ marginTop: 0 }}>Register</h2>
-      <p style={{ color: 'var(--color-text-muted)' }}>
-        Stubbed - no backend. Creates a local demo session.
-      </p>
+      <p style={{ color: 'var(--color-text-muted)' }}>Create your Gym Manager account.</p>
 
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12, marginTop: 12 }}>
         <Input label="Full Name" placeholder="Jane Doe" value={name} onChange={(e) => setName(e.target.value)} />
@@ -66,7 +59,7 @@ export default function Register() {
             value={role}
             onChange={(e) => setRole(e.target.value)}
           >
-            {/* Owner is intentionally not shown */}
+            <option value="owner">Owner</option>
             <option value="trainer">Trainer</option>
             <option value="member">Member</option>
           </select>
@@ -76,7 +69,7 @@ export default function Register() {
           <div style={{ color: 'var(--color-error)', fontSize: 13 }}>{error}</div>
         ) : null}
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <Button variant="primary" type="submit" disabled={status === 'loading'}>
             {status === 'loading' ? 'Creating...' : 'Sign Up'}
           </Button>
