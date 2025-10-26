@@ -4,8 +4,8 @@ import { useSelector } from 'react-redux';
 
 /**
  * PUBLIC_INTERFACE
- * RoleGuard - Renders children only if the current user's role is one of the allowed roles.
- * Otherwise redirects user to their default dashboard based on their role.
+ * RoleGuard - In stub mode, defaults to allowing access when role is unknown.
+ * If role exists and is not allowed, redirects to the user's default dashboard.
  *
  * Props:
  * - allow: string[] - list of allowed roles (e.g., ['owner'])
@@ -14,8 +14,8 @@ export default function RoleGuard({ allow = [], children }) {
   const role = useSelector((s) => s.auth.user?.role);
 
   if (!role) {
-    // If no role yet (should usually be handled by ProtectedRoute), deny access.
-    return <Navigate to="/login" replace />;
+    // No role available (stub): allow access to avoid blocking navigation
+    return children;
   }
 
   const isAllowed = allow.includes(role);
@@ -27,6 +27,6 @@ export default function RoleGuard({ allow = [], children }) {
   if (role === 'trainer') return <Navigate to="/trainer" replace />;
   if (role === 'member') return <Navigate to="/member" replace />;
 
-  // Unknown role fallback
-  return <Navigate to="/login" replace />;
+  // Unknown role fallback: allow
+  return children;
 }

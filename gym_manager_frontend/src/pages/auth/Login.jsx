@@ -4,11 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { authFailure, authSuccess, startAuth } from '../../state/slices/authSlice';
-import { getSupabaseClient } from '../../lib/supabaseClient';
 
 /**
- * Login page integrated with Redux auth.
- * It simulates an auth call and stores token/user/role, then redirects based on role.
+ * Login (stubbed - no backend)
+ * - On submit, seeds a local stub auth state and navigates.
  */
 export default function Login() {
   const dispatch = useDispatch();
@@ -26,35 +25,24 @@ export default function Login() {
     dispatch(startAuth());
 
     try {
-      const supabase = getSupabaseClient();
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        dispatch(authFailure(error.message || 'Invalid credentials.'));
-        return;
-      }
-
-      const session = data?.session;
-      const profile = data?.user || session?.user;
-
-      const token = session?.access_token || null;
-      if (!profile || !token) {
-        dispatch(authFailure('No session returned.'));
-        return;
-      }
-
-      const role =
-        profile?.app_metadata?.role ||
-        profile?.user_metadata?.role ||
-        'member';
+      // Choose role heuristically from email for demo
+      const role = email.includes('owner')
+        ? 'owner'
+        : email.includes('trainer')
+        ? 'trainer'
+        : 'member';
 
       const user = {
-        id: profile.id,
-        name: profile.user_metadata?.name || profile.email || 'User',
-        email: profile.email || '',
+        id: 'stub-user',
+        name: email?.split('@')[0] || 'Local User',
+        email,
         role,
       };
 
-      dispatch(authSuccess({ user, token }));
+      // Persist stub for future visits
+      localStorage.setItem('auth_stub', JSON.stringify(user));
+
+      dispatch(authSuccess({ user, token: 'local-stub-token' }));
 
       if (from) {
         navigate(from, { replace: true });
@@ -68,41 +56,28 @@ export default function Login() {
     }
   };
 
-  const signInWithGoogle = async () => {
-    try {
-      const supabase = getSupabaseClient();
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin + '/auth/callback',
-        },
-      });
-    } catch (err) {
-      dispatch(authFailure(err?.message || 'Google sign-in failed.'));
-    }
-  };
-
   return (
     <div>
       <h2 style={{ marginTop: 0 }}>Login</h2>
-      <p style={{ color: 'var(--color-text-muted)' }}>Enter your credentials to access your dashboard.</p>
+      <p style={{ color: 'var(--color-text-muted)' }}>
+        Stubbed - no backend. Use an email containing "owner" or "trainer" to preview role routing.
+      </p>
 
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12, marginTop: 12 }}>
         <Input
           label="Email"
           type="email"
-          placeholder="you@example.com"
+          placeholder="owner@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <Input
           label="Password"
           type="password"
-          placeholder="••••••••"
+          placeholder="any value"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-
 
         {error ? (
           <div style={{ color: 'var(--color-error)', fontSize: 13 }}>{error}</div>
@@ -111,9 +86,6 @@ export default function Login() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <Button variant="primary" type="submit" disabled={status === 'loading'}>
             {status === 'loading' ? 'Signing In...' : 'Sign In'}
-          </Button>
-          <Button variant="secondary" type="button" onClick={signInWithGoogle}>
-            Continue with Google
           </Button>
           <Link to="/register" className="btn btn-ghost">Create an account</Link>
         </div>

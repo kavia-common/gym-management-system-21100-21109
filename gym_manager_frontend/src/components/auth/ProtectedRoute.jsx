@@ -1,80 +1,53 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { authSuccess, logout } from '../../state/slices/authSlice';
-import { getSupabaseClient } from '../../lib/supabaseClient';
+import { useSelector, useDispatch } from 'react-redux';
+import { authSuccess } from '../../state/slices/authSlice';
 
 /**
  * PUBLIC_INTERFACE
- * ProtectedRoute - Guards routes that require authentication.
- * If no token is present, redirects to /login preserving the original location in state.from.
+ * ProtectedRoute - Local stubbed protection. By default allows access.
+ * - Uses localStorage 'auth_stub' to optionally gate.
+ * - If 'auth_stub' is present and no Redux token, it seeds a dummy auth.
  */
 export default function ProtectedRoute({ children }) {
+  const location = useLocation();
   const dispatch = useDispatch();
   const token = useSelector((s) => s.auth.token);
-  const location = useLocation();
 
   React.useEffect(() => {
-    const supabase = getSupabaseClient();
-
-    // Bootstrap current session on mount if Redux empty
-    (async () => {
-      if (!token) {
-        const { data } = await supabase.auth.getSession();
-        const session = data?.session;
-        const profile = session?.user;
-        if (session && profile) {
-          const role =
-            profile?.app_metadata?.role ||
-            profile?.user_metadata?.role ||
-            'member';
-          dispatch(
-            authSuccess({
-              token: session.access_token,
-              user: {
-                id: profile.id,
-                name: profile.user_metadata?.name || profile.email || 'User',
-                email: profile.email || '',
-                role,
-              },
-            })
-          );
-        }
-      }
-    })();
-
-    // Subscribe to auth changes
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.access_token && session.user) {
-        const profile = session.user;
-        const role =
-          profile?.app_metadata?.role ||
-          profile?.user_metadata?.role ||
-          'member';
+    // If a stub flag is set, ensure Redux has a minimal auth state
+    const stub = localStorage.getItem('auth_stub');
+    if (stub && !token) {
+      try {
+        const parsed = JSON.parse(stub);
+        const role = parsed?.role || 'member';
         dispatch(
           authSuccess({
-            token: session.access_token,
+            token: 'local-stub-token',
             user: {
-              id: profile.id,
-              name: profile.user_metadata?.name || profile.email || 'User',
-              email: profile.email || '',
+              id: 'stub-user',
+              name: parsed?.name || 'Local User',
+              email: parsed?.email || 'local@example.com',
               role,
             },
           })
         );
-      } else if (event === 'SIGNED_OUT') {
-        dispatch(logout());
+      } catch {
+        dispatch(
+          authSuccess({
+            token: 'local-stub-token',
+            user: { id: 'stub-user', name: 'Local User', email: '', role: 'member' },
+          })
+        );
       }
-    });
-
-    return () => {
-      sub?.subscription?.unsubscribe?.();
-    };
+    }
   }, [dispatch, token]);
 
-  if (!token) {
-    // Redirect unauthenticated users to login page with the intended path
-    return <Navigate to="/login" replace state={{ from: location }} />;
-  }
+  // If you want to fully allow access regardless of auth, just return children.
+  // If you want a soft gate, uncomment the redirect below and rely on auth_stub.
+  // if (!token && !localStorage.getItem('auth_stub')) {
+  //   return <Navigate to="/login" replace state={{ from: location }} />;
+  // }
+
   return children;
 }

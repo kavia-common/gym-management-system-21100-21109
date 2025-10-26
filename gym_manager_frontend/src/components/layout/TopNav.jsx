@@ -19,6 +19,9 @@ export default function TopNav() {
   };
 
   const onLogout = () => {
+    try {
+      localStorage.removeItem('auth_stub');
+    } catch {}
     dispatch(logout());
     navigate('/login', { replace: true });
   };
