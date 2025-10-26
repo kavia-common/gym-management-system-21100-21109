@@ -20,4 +20,22 @@ export function configureAppStore(preloadedState) {
 }
 
 // PUBLIC_INTERFACE
-export const store = configureAppStore();
+let preloaded = undefined;
+try {
+  const raw = window.localStorage.getItem('gm.auth.redux');
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    preloaded = {
+      auth: {
+        user: parsed?.user || null,
+        token: parsed?.token || null,
+        status: parsed?.token ? 'succeeded' : 'idle',
+        error: null,
+      },
+    };
+  }
+} catch {
+  // ignore parse errors
+}
+
+export const store = configureAppStore(preloaded);

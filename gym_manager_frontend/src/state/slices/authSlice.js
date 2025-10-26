@@ -32,6 +32,11 @@ export const authSlice = createSlice({
       state.token = token || null;
       state.status = 'succeeded';
       state.error = null;
+      try {
+        window.localStorage.setItem('gm.auth.redux', JSON.stringify({ user, token }));
+      } catch {
+        // ignore storage errors
+      }
     },
     // PUBLIC_INTERFACE
     authFailure(state, action) {
@@ -44,6 +49,11 @@ export const authSlice = createSlice({
       state.token = null;
       state.status = 'idle';
       state.error = null;
+      try {
+        window.localStorage.removeItem('gm.auth.redux');
+      } catch {
+        // ignore
+      }
     },
     // PUBLIC_INTERFACE
     setToken(state, action) {

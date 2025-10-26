@@ -4,10 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { authFailure, authSuccess, startAuth } from '../../state/slices/authSlice';
+import { config } from '../../config';
+import { supabase } from '../../lib/supabaseClient';
 
 /**
  * Register page integrated with Redux auth.
- * It simulates a registration flow, sets auth state, and redirects by chosen role.
+ * Uses Supabase signUp in real mode; mock fallback otherwise.
  */
 export default function Register() {
   const dispatch = useDispatch();
@@ -20,25 +22,83 @@ export default function Register() {
   const [password, setPassword] = React.useState('');
   const [role, setRole] = React.useState('member');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(startAuth());
 
-    setTimeout(() => {
-      if (!name || !email || !password) {
-        dispatch(authFailure('All fields are required.'));
+    // Mock mode
+    if (config.useMocks || !supabase) {
+      setTimeout(() => {
+        if (!name || !email || !password) {
+          dispatch(authFailure('All fields are required.'));
+          return;
+        }
+        const fakeToken = 'mock-jwt-token';
+        const user = { id: 'u_2', name, role, email };
+        dispatch(authSuccess({ user, token: fakeToken }));
+
+        if (role === 'owner') navigate('/owner', { replace: true });
+        else if (role === 'trainer') navigate('/trainer', { replace: true });
+        else navigate('/member', { replace: true });
+      }, 400);
+      return;
+    }
+
+    // Real mode
+    if (!name || !email || !password) {
+      dispatch(authFailure('All fields are required.'));
+      return;
+    }
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            name,
+            role, // 'owner' | 'trainer' | 'member'
+          },
+        },
+      });
+
+      if (error) {
+        dispatch(authFailure(error.message || 'Registration failed.'));
         return;
       }
 
-      const fakeToken = 'mock-jwt-token';
-      const user = { id: 'u_2', name, role };
+      // Note: If email confirmation is enabled, no session is returned.
+      const session = data.session;
+      const profile = data.user;
 
-      dispatch(authSuccess({ user, token: fakeToken }));
+      if (!session) {
+        // Inform user to verify email and then sign in
+        dispatch(authFailure('Registration successful. Please check your email to confirm your account, then sign in.'));
+        navigate('/login', { replace: true });
+        return;
+      }
 
-      if (role === 'owner') navigate('/owner', { replace: true });
-      else if (role === 'trainer') navigate('/trainer', { replace: true });
+      const token = session?.access_token || null;
+      const resolvedRole =
+        profile?.app_metadata?.role ||
+        profile?.user_metadata?.role ||
+        role || 'member';
+
+      const user = {
+        id: profile?.id,
+        name: profile?.user_metadata?.name || name,
+        email: profile?.email || email,
+        role: resolvedRole,
+      };
+
+      dispatch(authSuccess({ user, token }));
+
+      if (resolvedRole === 'owner') navigate('/owner', { replace: true });
+      else if (resolvedRole === 'trainer') navigate('/trainer', { replace: true });
       else navigate('/member', { replace: true });
-    }, 600);
+    } catch (err) {
+      dispatch(authFailure(err?.message || 'Registration failed.'));
+    }
   };
 
   return (

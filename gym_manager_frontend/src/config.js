@@ -36,10 +36,22 @@ export function getFeatureFlags() {
   }
 }
 
+/** Returns Supabase URL from env (REACT_APP_SUPABASE_URL) */
+export function getSupabaseUrl() {
+  return getEnvVar('REACT_APP_SUPABASE_URL', '');
+}
+
+/** Returns Supabase anon key from env (REACT_APP_SUPABASE_ANON_KEY) */
+export function getSupabaseAnonKey() {
+  return getEnvVar('REACT_APP_SUPABASE_ANON_KEY', '');
+}
+
 // PUBLIC_INTERFACE
 export const config = {
   /** This is the primary configuration object used in the app. */
   apiBaseUrl: getApiBaseUrl(),
   useMocks: getUseMocks(),
   featureFlags: getFeatureFlags(),
+  supabaseUrl: getSupabaseUrl(),
+  supabaseAnonKey: getSupabaseAnonKey(),
 };

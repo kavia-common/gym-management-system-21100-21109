@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/theme.css';
 import Button from '../ui/Button';
 import { logout } from '../../state/slices/authSlice';
+import { config } from '../../config';
+import { supabase } from '../../lib/supabaseClient';
 
 /**
  * TopNav aligned with Ocean Professional theme.
@@ -18,9 +20,18 @@ export default function TopNav() {
     window.dispatchEvent(new CustomEvent('toggle-sidenav'));
   };
 
-  const onLogout = () => {
-    dispatch(logout());
-    navigate('/login', { replace: true });
+  const onLogout = async () => {
+    try {
+      if (!config.useMocks && supabase) {
+        await supabase.auth.signOut();
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[Supabase] signOut warning:', e?.message || e);
+    } finally {
+      dispatch(logout());
+      navigate('/login', { replace: true });
+    }
   };
 
   return (

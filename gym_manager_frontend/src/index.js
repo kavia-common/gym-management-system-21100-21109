@@ -6,6 +6,8 @@ import './index.css';
 import App from './App';
 import { store } from './state/store';
 import { config } from './config';
+import { supabase } from './lib/supabaseClient';
+import { authSuccess, logout } from './state/slices/authSlice';
 
 async function enableMocksIfNeeded() {
   if (config.useMocks) {
@@ -28,8 +30,67 @@ async function enableMocksIfNeeded() {
   }
 }
 
+async function hydrateAuthFromSupabase() {
+  if (config.useMocks || !supabase) return;
+
+  try {
+    // Read current session on load
+    const { data } = await supabase.auth.getSession();
+    const session = data?.session;
+    const profile = session?.user;
+
+    if (session && profile) {
+      const resolvedRole =
+        profile?.app_metadata?.role ||
+        profile?.user_metadata?.role ||
+        'member';
+
+      store.dispatch(
+        authSuccess({
+          token: session.access_token || null,
+          user: {
+            id: profile.id,
+            name: profile?.user_metadata?.name || profile?.email || 'User',
+            email: profile?.email || '',
+            role: resolvedRole,
+          },
+        })
+      );
+    }
+
+    // Subscribe to auth state changes
+    supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (newSession?.user) {
+        const u = newSession.user;
+        const r =
+          u?.app_metadata?.role ||
+          u?.user_metadata?.role ||
+          'member';
+        store.dispatch(
+          authSuccess({
+            token: newSession.access_token || null,
+            user: {
+              id: u.id,
+              name: u?.user_metadata?.name || u?.email || 'User',
+              email: u?.email || '',
+              role: r,
+            },
+          })
+        );
+      } else {
+        // Signed out
+        store.dispatch(logout());
+      }
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[Supabase] Failed to hydrate session:', e?.message || e);
+  }
+}
+
 async function bootstrap() {
   await enableMocksIfNeeded();
+  await hydrateAuthFromSupabase();
 
   const root = ReactDOM.createRoot(document.getElementById('root'));
   root.render(
