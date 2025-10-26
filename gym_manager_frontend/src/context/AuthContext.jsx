@@ -1,6 +1,7 @@
 /**
  * Authentication Context: provides user/session and listens for Supabase auth changes.
- * Defensively handles environments without Supabase env vars by operating in no-auth mode.
+ * Defensively handles environments without Supabase env vars by operating in no-auth mode
+ * and guards all uses of supabase.auth to avoid null dereference in unconfigured builds.
  */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import supabase, { getCurrentSession } from '../lib/supabaseClient';

@@ -42,6 +42,10 @@ async function hydrateAuthFromSupabase() {
     typeof supabase.auth.getSession !== 'function';
 
   if (unusable) {
+    // eslint-disable-next-line no-console
+    if (supabase?.__noop) {
+      console.info('[Supabase] Skipping hydrate: no-op client (missing env).');
+    }
     return;
   }
 

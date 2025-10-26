@@ -22,11 +22,15 @@ export const tableNames = {
  * assertSupabaseReady - Throws a helpful error if env vars are missing.
  */
 export function assertSupabaseReady() {
-  const url = import.meta?.env?.VITE_SUPABASE_URL || process.env?.VITE_SUPABASE_URL;
-  const key = import.meta?.env?.VITE_SUPABASE_ANON_KEY || process.env?.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) {
+  const craUrl = process?.env?.REACT_APP_SUPABASE_URL;
+  const craKey = process?.env?.REACT_APP_SUPABASE_ANON_KEY;
+  const viteUrl = import.meta?.env?.VITE_SUPABASE_URL || process?.env?.VITE_SUPABASE_URL;
+  const viteKey = import.meta?.env?.VITE_SUPABASE_ANON_KEY || process?.env?.VITE_SUPABASE_ANON_KEY;
+  const hasCra = !!(craUrl && craKey);
+  const hasVite = !!(viteUrl && viteKey);
+  if (!hasCra && !hasVite) {
     throw new Error(
-      'Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.'
+      'Supabase is not configured. Please set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY (CRA) or VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (Vite) in your .env file.'
     );
   }
 }

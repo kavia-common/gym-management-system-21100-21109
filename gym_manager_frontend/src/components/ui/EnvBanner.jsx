@@ -1,4 +1,5 @@
 import React from 'react';
+import supabase from '../../lib/supabaseClient';
 
 /**
  * PUBLIC_INTERFACE
@@ -6,13 +7,15 @@ import React from 'react';
  * This component renders a global banner warning if required Supabase environment variables
  * are missing at runtime. It adheres to the Ocean Professional theme and masks the anon key.
  *
+ * It also displays the detected env source from the Supabase client (__envSource) to help verification.
+ *
  * Usage:
  *   <EnvBanner />
  *
  * Behavior:
- * - Checks for REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in process.env at runtime.
+ * - Checks for REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in process.env at build-time (inlined).
  * - If any are missing or empty, a prominent warning banner is displayed.
- * - If present but you wish to show their values for debugging, the anon key is masked.
+ * - Shows non-PII env source indicator from client: REACT_APP, VITE, UNPREFIXED, or NONE.
  */
 function EnvBanner() {
   // Read env vars (Create React App exposes REACT_APP_* at build time into process.env)
@@ -23,15 +26,16 @@ function EnvBanner() {
   const isMissingKey = !supabaseAnonKey || String(supabaseAnonKey).trim().length === 0;
   const showBanner = isMissingUrl || isMissingKey;
 
+  // Env source derived from the initialized client
+  const envSource = supabase?.__envSource || (supabase?.__noop ? 'NONE' : 'UNKNOWN');
+
   // Mask anon key for safe display, showing only last 4 chars
   const maskKey = (key) => {
     if (!key) return 'N/A';
     const str = String(key);
     const visible = str.slice(-4);
-    return `••••••••••••••••••••••••••••${visible}`;
+    return `••••••••••••••••••••••••${visible}`;
   };
-
-  if (!showBanner) return null;
 
   // Ocean Professional Theme Colors
   const colors = {
@@ -87,7 +91,8 @@ function EnvBanner() {
     border: `1px solid ${colors.primary}33`,
     borderRadius: 6,
     padding: '2px 6px',
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+    fontFamily:
+      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     fontSize: 12,
     color: colors.primary,
   };
@@ -114,6 +119,29 @@ function EnvBanner() {
     fontSize: 12,
   };
 
+  if (!showBanner) {
+    // when configured, render a tiny unobtrusive tag with env source for verification
+    return (
+      <div style={{ position: 'fixed', bottom: 8, right: 8, zIndex: 1000 }}>
+        <span
+          title="Supabase environment source (non-PII)"
+          style={{
+            background: '#E0F2FE',
+            color: '#075985',
+            border: '1px solid #38BDF8',
+            padding: '4px 8px',
+            borderRadius: 6,
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: 0.4,
+          }}
+        >
+          Supabase: {envSource}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div role="status" aria-live="polite" style={containerStyle}>
       <div style={innerStyle}>
@@ -121,6 +149,9 @@ function EnvBanner() {
         <div style={contentStyle}>
           <strong style={{ color: colors.error }}>Supabase configuration missing.</strong>{' '}
           Please set the required environment variables for this app to function correctly.
+          <div style={hintStyle}>
+            Detected source: <span style={codeStyle}>{envSource}</span>
+          </div>
           <div style={hintStyle}>
             Add the following to your <span style={codeStyle}>.env</span> file (and restart the dev server):
           </div>
@@ -140,8 +171,7 @@ function EnvBanner() {
               </span>
             ) : (
               <span style={pillStyle}>
-                REACT_APP_SUPABASE_ANON_KEY:{' '}
-                <span style={codeStyle}>{maskKey(supabaseAnonKey)}</span>
+                REACT_APP_SUPABASE_ANON_KEY: <span style={codeStyle}>{maskKey(supabaseAnonKey)}</span>
               </span>
             )}
           </div>
