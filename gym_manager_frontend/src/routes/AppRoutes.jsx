@@ -4,13 +4,16 @@ import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import RoleGuard from '../components/auth/RoleGuard';
+// New register wizard page (non-lazy to avoid code-split issues on critical path)
+import RegisterWizardPage from '../pages/auth/RegisterWizard.jsx';
 
-// Marketing Home page (non-lazy to ensure immediate load for landing)
+// Marketing pages
 import Home from '../pages/marketing/Home';
+import Plans from '../pages/marketing/Plans.jsx';
 
 // Lazy-loaded page components
 const Login = lazy(() => import('../pages/Login.tsx'));
-const Register = lazy(() => import('../pages/Signup.tsx'));
+const RegisterLegacy = lazy(() => import('../pages/Signup.tsx'));
 
 // New auth utility pages
 const ForgotPassword = lazy(() => import('../pages/ForgotPassword.tsx'));
@@ -38,19 +41,21 @@ const MemberProfile = lazy(() => import('../pages/member/Profile'));
 export default function AppRoutes() {
   /**
    * Route tree with public marketing page and nested role portals.
-   * Adds forgot/reset password routes.
+   * Adds plans and new registration wizard route.
    */
   return (
     <Suspense fallback={<div className="container" style={{ padding: 24 }}>Loading...</div>}>
       <Routes>
-        {/* Public Marketing Route */}
+        {/* Public Marketing Routes */}
         <Route path="/" element={<Home />} />
+        <Route path="/plans" element={<Plans />} />
 
         {/* Public routes within AuthLayout */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Register />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/signup" element={<RegisterLegacy />} />
+          <Route path="/register-legacy" element={<RegisterLegacy />} />
+          <Route path="/register" element={<RegisterWizardPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
