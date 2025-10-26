@@ -2,12 +2,12 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { authSuccess } from '../../state/slices/authSlice';
+import { ensureStubAuthInRedux } from '../../lib/authStub';
 
 /**
  * PUBLIC_INTERFACE
- * ProtectedRoute - Local stubbed protection. By default allows access.
- * - Uses localStorage 'auth_stub' to optionally gate.
- * - If 'auth_stub' is present and no Redux token, it seeds a dummy auth.
+ * ProtectedRoute - Seeds Redux from local stub session if found.
+ * In stub mode we allow access; optionally redirect to /login if no session and token.
  */
 export default function ProtectedRoute({ children }) {
   const location = useLocation();
@@ -15,39 +15,27 @@ export default function ProtectedRoute({ children }) {
   const token = useSelector((s) => s.auth.token);
 
   React.useEffect(() => {
-    // If a stub flag is set, ensure Redux has a minimal auth state
-    const stub = localStorage.getItem('auth_stub');
-    if (stub && !token) {
-      try {
-        const parsed = JSON.parse(stub);
-        const role = parsed?.role || 'member';
+    if (!token) {
+      ensureStubAuthInRedux((s) => {
         dispatch(
           authSuccess({
             token: 'local-stub-token',
             user: {
               id: 'stub-user',
-              name: parsed?.name || 'Local User',
-              email: parsed?.email || 'local@example.com',
-              role,
+              name: s?.name || 'Local User',
+              email: s?.email || '',
+              role: s?.role || 'member',
             },
           })
         );
-      } catch {
-        dispatch(
-          authSuccess({
-            token: 'local-stub-token',
-            user: { id: 'stub-user', name: 'Local User', email: '', role: 'member' },
-          })
-        );
-      }
+      });
     }
   }, [dispatch, token]);
 
-  // If you want to fully allow access regardless of auth, just return children.
-  // If you want a soft gate, uncomment the redirect below and rely on auth_stub.
-  // if (!token && !localStorage.getItem('auth_stub')) {
-  //   return <Navigate to="/login" replace state={{ from: location }} />;
-  // }
+  // Soft gate: keep permissive to avoid blocking during stubbed development
+  // If desired, enforce login when no token and no session present:
+  // const noSession = !token && !getCurrentSession();
+  // if (noSession) return <Navigate to="/login" replace state={{ from: location }} />;
 
   return children;
 }

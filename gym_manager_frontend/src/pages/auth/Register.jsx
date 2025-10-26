@@ -4,10 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { authFailure, authSuccess, startAuth } from '../../state/slices/authSlice';
+import { setCurrentSession, setRoleForEmail } from '../../lib/authStub';
 
 /**
  * Register (stubbed - no backend)
  * - Stores a local stub auth state and navigates by selected role.
+ * - Only shows Trainer/Member options (Owner must not be selectable).
  */
 export default function Register() {
   const dispatch = useDispatch();
@@ -18,7 +20,7 @@ export default function Register() {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [role, setRole] = React.useState('member');
+  const [role, setRole] = React.useState('member'); // default to member
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,13 +32,15 @@ export default function Register() {
         return;
       }
 
+      // Persist role by email and set current session
+      setRoleForEmail(email, role);
+      setCurrentSession({ email, role, name });
+
       const user = { id: 'stub-user', name, email, role };
-      localStorage.setItem('auth_stub', JSON.stringify(user));
       dispatch(authSuccess({ user, token: 'local-stub-token' }));
 
-      if (role === 'owner') navigate('/owner', { replace: true });
-      else if (role === 'trainer') navigate('/trainer', { replace: true });
-      else navigate('/member', { replace: true });
+      if (role === 'trainer') navigate('/trainer', { replace: true });
+      else navigate('/member', { replace: true }); // default path
     } catch (err) {
       dispatch(authFailure(err?.message || 'Failed to register.'));
     }
@@ -62,7 +66,7 @@ export default function Register() {
             value={role}
             onChange={(e) => setRole(e.target.value)}
           >
-            <option value="owner">Owner</option>
+            {/* Owner is intentionally not shown */}
             <option value="trainer">Trainer</option>
             <option value="member">Member</option>
           </select>

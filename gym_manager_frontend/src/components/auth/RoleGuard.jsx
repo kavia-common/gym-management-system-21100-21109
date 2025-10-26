@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { getCurrentRole } from '../../lib/authStub';
 
 /**
  * PUBLIC_INTERFACE
@@ -11,7 +12,8 @@ import { useSelector } from 'react-redux';
  * - allow: string[] - list of allowed roles (e.g., ['owner'])
  */
 export default function RoleGuard({ allow = [], children }) {
-  const role = useSelector((s) => s.auth.user?.role);
+  const reduxRole = useSelector((s) => s.auth.user?.role);
+  const role = reduxRole || getCurrentRole();
 
   if (!role) {
     // No role available (stub): allow access to avoid blocking navigation

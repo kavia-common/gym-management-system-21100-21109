@@ -4,10 +4,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { authFailure, authSuccess, startAuth } from '../../state/slices/authSlice';
+import { getRoleForEmail, setCurrentSession } from '../../lib/authStub';
 
 /**
  * Login (stubbed - no backend)
  * - On submit, seeds a local stub auth state and navigates.
+ * - If email contains 'owner' => force owner role.
+ * - Else use stored role for email if present, otherwise default to 'member'.
  */
 export default function Login() {
   const dispatch = useDispatch();
@@ -25,12 +28,9 @@ export default function Login() {
     dispatch(startAuth());
 
     try {
-      // Choose role heuristically from email for demo
-      const role = email.includes('owner')
-        ? 'owner'
-        : email.includes('trainer')
-        ? 'trainer'
-        : 'member';
+      const forcedOwner = String(email).toLowerCase().includes('owner');
+      const storedRole = forcedOwner ? 'owner' : (getRoleForEmail(email) || 'member');
+      const role = storedRole;
 
       const user = {
         id: 'stub-user',
@@ -39,8 +39,8 @@ export default function Login() {
         role,
       };
 
-      // Persist stub for future visits
-      localStorage.setItem('auth_stub', JSON.stringify(user));
+      // Persist current session for guards/nav
+      setCurrentSession({ email, role, name: user.name });
 
       dispatch(authSuccess({ user, token: 'local-stub-token' }));
 
@@ -60,7 +60,7 @@ export default function Login() {
     <div>
       <h2 style={{ marginTop: 0 }}>Login</h2>
       <p style={{ color: 'var(--color-text-muted)' }}>
-        Stubbed - no backend. Use an email containing "owner" or "trainer" to preview role routing.
+        Stubbed - no backend. Owner access is available by logging in with an email containing "owner".
       </p>
 
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12, marginTop: 12 }}>
