@@ -11,6 +11,12 @@ import Home from '../pages/marketing/Home';
 // Lazy-loaded page components
 const Login = lazy(() => import('../pages/auth/Login'));
 const Register = lazy(() => import('../pages/auth/Register'));
+
+// New auth utility pages
+const ForgotPassword = lazy(() => import('../pages/ForgotPassword.tsx'));
+const ResetPassword = lazy(() => import('../pages/ResetPassword.tsx'));
+
+// Existing portals
 const OwnerDashboard = lazy(() => import('../pages/owner/Dashboard'));
 const OwnerMembers = lazy(() => import('../pages/owner/Members'));
 const OwnerClasses = lazy(() => import('../pages/owner/Classes'));
@@ -32,9 +38,7 @@ const MemberProfile = lazy(() => import('../pages/member/Profile'));
 export default function AppRoutes() {
   /**
    * Route tree with public marketing page and nested role portals.
-   * - Home (/) is public and outside of Auth/Main layouts.
-   * - Auth routes are within AuthLayout.
-   * - Protected portals are within MainLayout.
+   * Adds forgot/reset password routes.
    */
   return (
     <Suspense fallback={<div className="container" style={{ padding: 24 }}>Loading...</div>}>
@@ -46,6 +50,8 @@ export default function AppRoutes() {
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
         {/* Protected portals inside MainLayout */}

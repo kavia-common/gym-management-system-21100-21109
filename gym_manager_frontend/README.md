@@ -29,7 +29,35 @@ Notes:
 - For real Supabase mode, provide valid Supabase env values; otherwise, the Supabase client will not be created and auth hydration is skipped.
 - Legacy REST endpoints in `src/api/endpoints.js` and axios `src/api/httpClient.js` are retained for reference but new data flows should prefer Supabase services where available.
 
-## Features
+## Supabase Authentication
+
+This app integrates Supabase email/password auth.
+
+Environment variables (Vite):
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_ANON_KEY
+- VITE_SITE_URL (used for email redirect links; falls back to window.location.origin)
+
+Create a `.env` file in gym_manager_frontend with:
+```
+VITE_SUPABASE_URL=https://YOURPROJECTID.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1...
+VITE_SITE_URL=http://localhost:3000
+```
+
+Key files:
+- src/lib/supabaseClient.js — Supabase client singleton.
+- src/context/AuthContext.jsx — Session handling and actions: signUp, signIn, signOut, resetPassword, updatePassword.
+- src/pages/ForgotPassword.tsx and src/pages/ResetPassword.tsx — Password recovery flow.
+- src/components/auth/ProtectedRoute.jsx — Guards protected routes.
+- src/routes/AppRoutes.jsx — Includes /forgot-password and /reset-password.
+
+Routes:
+- /login — Sign in
+- /register — Sign up
+- /forgot-password — Request reset link
+- /reset-password — Set new password after recovery link
+- Portals: /owner, /trainer, /member (guarded)
 
 - **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
 - **Modern UI**: Clean, responsive design with KAVIA brand styling

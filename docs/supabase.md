@@ -15,7 +15,21 @@ The frontend already integrates Supabase via the SDK and expects certain environ
 - Access to the Supabase Dashboard for your project
 - Google Cloud Console access (for OAuth Client ID/Secret) if you plan to enable Google sign-in
 
-## Environment Variables
+## Environment Variables (Vite build)
+
+The current frontend reads Supabase credentials via Vite envs:
+
+Required:
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_ANON_KEY
+
+Optional:
+- VITE_SITE_URL (used for email redirect links)
+
+Password recovery:
+- Recovery emails should redirect to: `${VITE_SITE_URL}/reset-password`
+
+Ensure Supabase Authentication -> URL Configuration has the callback URLs that match your deployment origins.
 
 The React app reads Supabase credentials from environment variables at build/runtime (Create React App convention). These must be set for auth to function.
 
