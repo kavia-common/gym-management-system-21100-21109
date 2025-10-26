@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import PlanComparison from './PlanComparison';
 import Input from '../ui/Input.jsx';
 import Button from '../ui/Button.jsx';
+import Modal from '../ui/Modal.jsx';
 import { Link } from 'react-router-dom';
 
 /**
@@ -67,6 +68,19 @@ export default function RegistrationWizard() {
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
 
+  // Invite code & access request modal
+  const [inviteCode, setInviteCode] = useState('');
+  const [inviteValid, setInviteValid] = useState(false);
+  const [inviteError, setInviteError] = useState('');
+  const [accessOpen, setAccessOpen] = useState(false);
+  const [accessForm, setAccessForm] = useState({
+    name: '',
+    email: '',
+    role: '',
+    reason: '',
+  });
+  const [accessStatus, setAccessStatus] = useState('');
+
   // Mock plans (could be fetched later)
   const plans = useMemo(
     () => [
@@ -107,6 +121,8 @@ export default function RegistrationWizard() {
         setPersonal(parsed.personal ?? { firstName: '', lastName: '', phone: '' });
         setSelectedPlanId(parsed.selectedPlanId ?? '');
         setAcceptTerms(!!parsed.acceptTerms);
+        setInviteCode(parsed.inviteCode ?? '');
+        setInviteValid(!!parsed.inviteValid);
       } else if (userEmail) {
         // If logged in, prefill account and skip step 0
         setAccount({ email: userEmail, password: '' });
@@ -120,19 +136,21 @@ export default function RegistrationWizard() {
 
   // Persist state
   useEffect(() => {
-    const payload = { step, account, personal, selectedPlanId, acceptTerms };
+    const payload = { step, account, personal, selectedPlanId, acceptTerms, inviteCode, inviteValid };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // storage may fail (quota/private mode)
     }
-  }, [step, account, personal, selectedPlanId, acceptTerms]);
+  }, [step, account, personal, selectedPlanId, acceptTerms, inviteCode, inviteValid]);
 
-  // Determine visible steps if logged in
+  // Determine visible steps with role-based Invite Code gating
   const effectiveSteps = useMemo(() => {
-    // If session exists, we skip Step 0 (Account)
-    return session ? ['Personal', 'Plan', 'Review', 'Payment'] : ['Account', 'Personal', 'Plan', 'Review', 'Payment'];
-  }, [session]);
+    const base = session ? ['Personal'] : ['Account', 'Personal'];
+    const needsInvite = selectedRole === 'trainer' || selectedRole === 'owner';
+    const inviteStep = needsInvite && !inviteValid ? ['Invite Code'] : [];
+    return [...base, ...inviteStep, 'Plan', 'Review', 'Payment'];
+  }, [session, selectedRole, inviteValid]);
 
   const totalSteps = effectiveSteps.length;
 
@@ -166,11 +184,36 @@ export default function RegistrationWizard() {
     return Object.keys(e).length === 0;
   }
 
+  function validateInviteCodeLocally(code, role) {
+    const envOwner = (process.env.REACT_APP_INVITE_CODES_OWNER || '').split(',').map(s => s.trim()).filter(Boolean);
+    const envTrainer = (process.env.REACT_APP_INVITE_CODES_TRAINER || '').split(',').map(s => s.trim()).filter(Boolean);
+    const allowAny = (process.env.REACT_APP_INVITE_CODES_ALLOW_ANY === 'true');
+
+    if (!code || code.length < 4) {
+      return { ok: false, message: 'Please enter a valid invite code.' };
+    }
+    if (allowAny) return { ok: true };
+    if (role === 'owner' && envOwner.includes(code)) return { ok: true };
+    if (role === 'trainer' && envTrainer.includes(code)) return { ok: true };
+    if (code === 'DEMO-OWNER' && role === 'owner') return { ok: true };
+    if (code === 'DEMO-TRAINER' && role === 'trainer') return { ok: true };
+    return { ok: false, message: 'Invalid invite code. Click “Request access” if you don’t have one.' };
+  }
+
   async function handleContinue() {
     if (!validateCurrentStep()) return;
 
     const currentLabel = effectiveSteps[step];
-    if (currentLabel === 'Account') {
+    if (currentLabel === 'Invite Code') {
+      const { ok, message } = validateInviteCodeLocally(inviteCode.trim(), selectedRole);
+      if (!ok) {
+        setInviteValid(false);
+        setInviteError(message || 'Invite code is not valid.');
+        return;
+      }
+      setInviteError('');
+      setInviteValid(true);
+    } else if (currentLabel === 'Account') {
       // attempt sign up with Supabase if not logged in
       try {
         setSaving(true);
@@ -338,6 +381,113 @@ export default function RegistrationWizard() {
           <Button variant="secondary" onClick={back}>Back</Button>
           <Button onClick={handleContinue}>Continue</Button>
         </div>
+      </div>
+    );
+  }
+
+  function renderInviteCode() {
+    const hint = selectedRole === 'owner'
+      ? 'An invite code is required to register as an Admin/Owner.'
+      : 'An invite code is required to register as a Trainer.';
+
+    return (
+      <div>
+        <h2 style={{ marginTop: 0, color: '#111827' }}>Enter Invite Code</h2>
+        <p style={{ color: '#6b7280' }}>{hint}</p>
+        {inviteError && <div role="alert" style={{ color: '#EF4444', marginBottom: 12 }}>{inviteError}</div>}
+        <div style={{ display: 'grid', gap: 12 }}>
+          <label>
+            <span className="sr-only">Invite code</span>
+            <Input
+              aria-invalid={!!inviteError}
+              aria-describedby={inviteError ? 'err-invite' : undefined}
+              placeholder="e.g., ABCD-1234"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+            />
+            {inviteError && <div id="err-invite" role="alert" style={{ color: '#EF4444', fontSize: 12 }}>{inviteError}</div>}
+          </label>
+          <div style={{ fontSize: 12, color: '#6b7280' }}>
+            Don’t have a code?{' '}
+            <button
+              type="button"
+              onClick={() => {
+                setAccessStatus('');
+                setAccessOpen(true);
+                setAccessForm((f) => ({
+                  ...f,
+                  name: `${personal.firstName || ''} ${personal.lastName || ''}`.trim(),
+                  email: account.email || '',
+                  role: selectedRole,
+                }));
+              }}
+              style={{ color: '#2563EB', textDecoration: 'underline', background: 'transparent', border: 'none', cursor: 'pointer' }}
+            >
+              Request access
+            </button>
+            .
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <Button variant="secondary" onClick={back}>Back</Button>
+          <Button onClick={handleContinue}>Validate & Continue</Button>
+        </div>
+
+        <Modal
+          open={accessOpen}
+          title="Request Access"
+          onClose={() => setAccessOpen(false)}
+          primaryAction={
+            <Button
+              onClick={() => {
+                try {
+                  const existing = JSON.parse(localStorage.getItem('access_requests') || '[]');
+                  const payload = { ...accessForm, ts: new Date().toISOString() };
+                  localStorage.setItem('access_requests', JSON.stringify([...existing, payload]));
+                  setAccessStatus('Request sent. We’ll reach out with an invite code.');
+                } catch {
+                  setAccessStatus('Could not save request locally. Please try again.');
+                }
+              }}
+            >
+              Submit Request
+            </Button>
+          }
+          secondaryAction={
+            <Button variant="ghost" onClick={() => setAccessOpen(false)}>Cancel</Button>
+          }
+        >
+          <div style={{ display: 'grid', gap: 10 }}>
+            <Input
+              label="Full name"
+              value={accessForm.name}
+              onChange={(e) => setAccessForm((f) => ({ ...f, name: e.target.value }))}
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={accessForm.email}
+              onChange={(e) => setAccessForm((f) => ({ ...f, email: e.target.value }))}
+            />
+            <Input
+              label="Role"
+              value={accessForm.role}
+              onChange={(e) => setAccessForm((f) => ({ ...f, role: e.target.value }))}
+            />
+            <div>
+              <label style={{ fontWeight: 600, fontSize: 14 }} htmlFor="access-reason">Reason</label>
+              <textarea
+                id="access-reason"
+                className="input"
+                rows={4}
+                placeholder="Briefly describe why you need access"
+                value={accessForm.reason}
+                onChange={(e) => setAccessForm((f) => ({ ...f, reason: e.target.value }))}
+              />
+            </div>
+            {accessStatus && <div role="status" style={{ color: '#2563EB', fontSize: 13 }}>{accessStatus}</div>}
+          </div>
+        </Modal>
       </div>
     );
   }
@@ -536,6 +686,7 @@ export default function RegistrationWizard() {
       <div style={cardStyle}>
         {effectiveSteps[step] === 'Account' && renderAccount()}
         {effectiveSteps[step] === 'Personal' && renderPersonal()}
+        {effectiveSteps[step] === 'Invite Code' && renderInviteCode()}
         {effectiveSteps[step] === 'Plan' && renderPlan()}
         {effectiveSteps[step] === 'Review' && renderReview()}
         {effectiveSteps[step] === 'Payment' && renderPayment()}

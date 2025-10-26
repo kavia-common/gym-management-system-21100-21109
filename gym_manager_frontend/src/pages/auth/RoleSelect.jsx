@@ -17,14 +17,14 @@ const ROLE_OPTIONS = [
   {
     label: 'Trainer',
     value: 'trainer',
-    description: 'Create classes, manage clients, and view performance analytics.',
+    description: 'Create classes, manage clients, and view performance analytics. Invite code required.',
     icon: '🏋️',
     aria: 'Select Trainer role',
   },
   {
     label: 'Admin/Owner',
     value: 'owner',
-    description: 'Manage gym operations, memberships, payments, and analytics.',
+    description: 'Manage gym operations, memberships, payments, and analytics. Invite code required.',
     icon: '🗂️',
     aria: 'Select Admin or Owner role',
   },

@@ -7,6 +7,11 @@ REACT_APP_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 # Optional, used for emailRedirectTo / reset flows
 REACT_APP_SITE_URL=<public-site-url>
 
+# Invite code gating (placeholder for Trainer/Admin roles)
+REACT_APP_INVITE_CODES_TRAINER=DEMO-TRAINER
+REACT_APP_INVITE_CODES_OWNER=DEMO-OWNER
+REACT_APP_INVITE_CODES_ALLOW_ANY=false
+
 Notes:
 - The Supabase client is initialized in src/lib/supabaseClient.js.
 - AuthProvider (src/context/AuthContext.jsx) loads the session on mount and listens to onAuthStateChange.

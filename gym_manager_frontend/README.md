@@ -59,6 +59,11 @@ Routes:
 - /reset-password — Set new password after recovery link
 - Portals: /owner, /trainer, /member (guarded)
 
+Invite Codes (Trainer/Admin):
+- Registration for Trainer (`trainer`) and Admin/Owner (`owner`) requires an invite code.
+- Configure via env: `REACT_APP_INVITE_CODES_TRAINER`, `REACT_APP_INVITE_CODES_OWNER`, or set `REACT_APP_INVITE_CODES_ALLOW_ANY=true` for local demos.
+- Users can click "Request access" to submit a local request saved to `localStorage.access_requests`.
+
 - **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
 - **Modern UI**: Clean, responsive design with KAVIA brand styling
 - **Fast**: Minimal dependencies for quick loading times

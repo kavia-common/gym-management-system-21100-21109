@@ -49,6 +49,24 @@ This avoids impacting the existing Supabase authentication context and works eve
   - A "Change" link that routes back to `/get-started`
 - Placeholders are included for future role-specific field variations.
 
+### Invite Code (Trainer/Admin/Owner only)
+
+- The wizard inserts an "Invite Code" step for `trainer` and `owner` roles.
+- Users cannot proceed without a valid code.
+- Validation is a placeholder:
+  - Compares against comma-separated env vars:
+    - `REACT_APP_INVITE_CODES_TRAINER`
+    - `REACT_APP_INVITE_CODES_OWNER`
+    - `REACT_APP_INVITE_CODES_ALLOW_ANY` (if `true`, any non-empty code passes)
+  - Defaults accept demo codes: `DEMO-TRAINER` and `DEMO-OWNER`.
+- If the user lacks a code, they can click "Request access" to open a modal.
+
+### Request Access Modal
+
+- Collects name, email, role, and reason.
+- Currently stores submissions locally under `localStorage.access_requests` (array).
+- This can be swapped for a backend endpoint in the future (e.g., POST /access-requests).
+
 ## Header Updates
 
 - File: `src/components/layout/Header.jsx`
