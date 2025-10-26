@@ -2,7 +2,7 @@ import React from 'react';
 import Card from '../../components/ui/Card';
 import SimpleTable from '../../components/shared/SimpleTable';
 import Button from '../../components/ui/Button';
-import { supabase } from '../../lib/supabaseClient';
+import supabase from '../../lib/supabaseClient';
 import { classesService, bookingsService } from '../../services/supabase';
 
 /**

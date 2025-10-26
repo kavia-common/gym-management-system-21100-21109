@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { authSuccess } from '../../state/slices/authSlice';
-import { supabase } from '../../lib/supabaseClient';
+import supabase from '../../lib/supabaseClient';
 import { profilesService } from '../../services/supabase';
 
 /**
