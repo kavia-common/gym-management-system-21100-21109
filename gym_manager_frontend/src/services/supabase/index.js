@@ -5,7 +5,7 @@
  */
 
 // imports (top only)
-import supabase, { supabase as supabaseClient, getCurrentSession } from '../../lib/supabaseClient';
+import supabase, { supabase as supabaseClient, getCurrentSession } from '../../lib/supabaseClient.js';
 
 import * as bookingsService from './bookings';
 import * as classesService from './classes';

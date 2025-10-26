@@ -1,3 +1,4 @@
+// Authentication Context: provides user/session and listens for Supabase auth changes.
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import supabase, { getCurrentSession } from '../lib/supabaseClient';
 

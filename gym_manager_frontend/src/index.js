@@ -7,8 +7,7 @@ import App from './App';
 import { store } from './state/store';
 import { config } from './config';
 import { authSuccess, logout } from './state/slices/authSlice';
-import { AuthProvider } from './context/AuthContext';
-
+import AuthProvider from './context/AuthContext';
 import supabase from './lib/supabaseClient';
 
 async function enableMocksIfNeeded() {
@@ -34,7 +33,10 @@ async function enableMocksIfNeeded() {
 }
 
 async function hydrateAuthFromSupabase() {
-  if (config.useMocks || !supabase) return;
+  // Skip in mock mode or if client is not usable
+  if (config.useMocks || !supabase || !supabase.auth || typeof supabase.auth.getSession !== 'function') {
+    return;
+  }
 
   try {
     // Read current session on load
@@ -61,30 +63,32 @@ async function hydrateAuthFromSupabase() {
       );
     }
 
-    // Subscribe to auth state changes
-    supabase.auth.onAuthStateChange((_event, newSession) => {
-      if (newSession?.user) {
-        const u = newSession.user;
-        const r =
-          u?.app_metadata?.role ||
-          u?.user_metadata?.role ||
-          'member';
-        store.dispatch(
-          authSuccess({
-            token: newSession.access_token || null,
-            user: {
-              id: u.id,
-              name: u?.user_metadata?.name || u?.email || 'User',
-              email: u?.email || '',
-              role: r,
-            },
-          })
-        );
-      } else {
-        // Signed out
-        store.dispatch(logout());
-      }
-    });
+    // Subscribe to auth state changes if available
+    if (typeof supabase.auth.onAuthStateChange === 'function') {
+      supabase.auth.onAuthStateChange((_event, newSession) => {
+        if (newSession?.user) {
+          const u = newSession.user;
+          const r =
+            u?.app_metadata?.role ||
+            u?.user_metadata?.role ||
+            'member';
+          store.dispatch(
+            authSuccess({
+              token: newSession.access_token || null,
+              user: {
+                id: u.id,
+                name: u?.user_metadata?.name || u?.email || 'User',
+                email: u?.email || '',
+                role: r,
+              },
+            })
+          );
+        } else {
+          // Signed out
+          store.dispatch(logout());
+        }
+      });
+    }
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn('[Supabase] Failed to hydrate session:', e?.message || e);
