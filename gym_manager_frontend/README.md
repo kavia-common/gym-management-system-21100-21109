@@ -9,7 +9,7 @@ This project provides a minimal React template with a clean, modern UI and minim
 
 Login and Register pages are wired to Redux `authSlice` to store `{ token, user, role }` and navigate to dashboards by role.
 
-When integrating a real backend, set `REACT_APP_API_BASE_URL` in your environment (see `src/api/httpClient.js`).
+When integrating a real backend, set `REACT_APP_API_BASE_URL` in your environment (see `src/api/httpClient.js`). The app supports a mock mode with `REACT_APP_USE_MOCKS=true` and does not include any Supabase integration.
 
 ## Features
 
