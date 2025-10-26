@@ -4,7 +4,6 @@ import { NavLink, useNavigate, Link } from 'react-router-dom';
 import '../../styles/theme.css';
 import Button from '../ui/Button';
 import { logout } from '../../state/slices/authSlice';
-import Logo from './Logo';
 
 let supabase = null;
 try {
@@ -64,9 +63,7 @@ export default function TopNav() {
         >
           ☰
         </button>
-        <Link to="/" className="topnav-brand" aria-label="Go to home page">
-          <Logo size={22} />
-        </Link>
+        <Link to="/" className="topnav-brand" aria-label="Go to home page">Gym Manager</Link>
       </div>
 
       <nav aria-label="Primary">
