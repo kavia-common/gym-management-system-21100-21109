@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import ContactSection from '../../components/home/ContactSection';
 import '../../styles/theme.css';
 
 /**
@@ -105,6 +106,21 @@ const Home = () => {
                 aria-label="Learn more about features"
               >
                 Learn more
+                <span aria-hidden="true">→</span>
+              </a>
+              <a
+                href="#contact"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  color: 'var(--primary)',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+                aria-label="Go to Contact section"
+              >
+                Contact Us
                 <span aria-hidden="true">→</span>
               </a>
             </div>
@@ -278,6 +294,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Contact Section */}
+      <ContactSection />
 
       {/* Fixed Corner CTA */}
       <Link
