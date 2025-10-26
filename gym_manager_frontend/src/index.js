@@ -7,6 +7,7 @@ import App from './App';
 import { store } from './state/store';
 import { config } from './config';
 import { authSuccess, logout } from './state/slices/authSlice';
+import { AuthProvider } from './context/AuthContext';
 
 let supabase = null;
 
@@ -111,7 +112,9 @@ async function bootstrap() {
     <React.StrictMode>
       <Provider store={store}>
         <BrowserRouter>
-          <App />
+          <AuthProvider>
+            <App />
+          </AuthProvider>
         </BrowserRouter>
       </Provider>
     </React.StrictMode>

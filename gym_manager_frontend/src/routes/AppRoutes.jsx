@@ -9,8 +9,8 @@ import RoleGuard from '../components/auth/RoleGuard';
 import Home from '../pages/marketing/Home';
 
 // Lazy-loaded page components
-const Login = lazy(() => import('../pages/auth/Login'));
-const Register = lazy(() => import('../pages/auth/Register'));
+const Login = lazy(() => import('../pages/Login.tsx'));
+const Register = lazy(() => import('../pages/Signup.tsx'));
 
 // New auth utility pages
 const ForgotPassword = lazy(() => import('../pages/ForgotPassword.tsx'));
@@ -49,6 +49,7 @@ export default function AppRoutes() {
         {/* Public routes within AuthLayout */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Register />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -166,6 +167,16 @@ export default function AppRoutes() {
             element={
               <ProtectedRoute>
                 <RoleGuard allow={['member']}>
+                  <MemberDashboard />
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allow={['member', 'trainer', 'owner']}>
                   <MemberDashboard />
                 </RoleGuard>
               </ProtectedRoute>
