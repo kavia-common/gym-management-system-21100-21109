@@ -4,7 +4,7 @@
  * and guards all uses of supabase.auth to avoid null dereference in unconfigured builds.
  */
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import supabase, { getCurrentSession } from '../lib/supabaseClient';
+import { supabase, getCurrentSession } from '../lib/supabaseClient';
 
 const AuthContext = createContext({
   user: null,

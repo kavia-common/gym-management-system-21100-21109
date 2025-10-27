@@ -1,7 +1,7 @@
-import supabase from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 
 // Re-export client for convenience in consumers that import from helpers
-export { default as supabase } from '../../lib/supabaseClient';
+export { supabase } from '../../lib/supabaseClient';
 
 /**
  * PUBLIC_INTERFACE

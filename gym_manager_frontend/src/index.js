@@ -8,7 +8,7 @@ import { store } from './state/store';
 import { config } from './config';
 import { authSuccess, logout } from './state/slices/authSlice';
 import AuthProvider from './context/AuthContext';
-import supabase from './lib/supabaseClient';
+import { supabase } from './lib/supabaseClient';
 
 async function enableMocksIfNeeded() {
   // Only initialize MSW when explicitly enabled via env toggle
