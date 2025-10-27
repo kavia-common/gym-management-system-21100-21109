@@ -4,7 +4,6 @@ import './styles/theme.css';
 import AppRoutes from './routes/AppRoutes';
 import { useDispatch, useSelector } from 'react-redux';
 import { setTheme } from './state/slices/uiSlice';
-import { AuthProvider } from './context/AuthContext';
 import Header from './components/layout/Header.jsx';
 import EnvBanner from './components/ui/EnvBanner';
 
@@ -31,13 +30,13 @@ function App() {
   }, [dispatch, theme]);
 
   return (
-    <AuthProvider>
+    <>
       <Header />
       <EnvBanner />
       <div className="app-shell">
         <AppRoutes />
       </div>
-    </AuthProvider>
+    </>
   );
 }
 
