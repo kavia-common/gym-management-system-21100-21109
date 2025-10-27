@@ -4,7 +4,7 @@
  * and guards all uses of supabase.auth to avoid null dereference in unconfigured builds.
  */
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, getCurrentSession } from '../lib/supabaseClient';
+import { supabase, getCurrentSession, __supabaseEnvPresence, __supabaseEnvSource } from '../lib/supabaseClient';
 
 const AuthContext = createContext({
   user: null,
@@ -24,6 +24,16 @@ export function AuthProvider({ children }) {
 
   // Initialize session on mount
   useEffect(() => {
+    // Guard log to catch mismatches in exports or client shape
+    // eslint-disable-next-line no-console
+    console.info('[Auth] Supabase guard:', {
+      hasClient: !!supabase,
+      hasAuth: !!supabase?.auth,
+      hasGetSession: typeof supabase?.auth?.getSession === 'function',
+      envSource: __supabaseEnvSource,
+      presence: __supabaseEnvPresence,
+    });
+
     let mounted = true;
 
     (async () => {

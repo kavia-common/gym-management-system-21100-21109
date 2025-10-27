@@ -111,6 +111,23 @@ async function hydrateAuthFromSupabase() {
 
 async function bootstrap() {
   await enableMocksIfNeeded();
+
+  // Quick guard: log available exports to catch mismatches in import surface
+  try {
+    // Dynamically import to reflect actual resolution
+    const mod = await import('./lib/supabaseClient');
+    // eslint-disable-next-line no-console
+    console.info('[Supabase] Export check:', {
+      hasSupabase: !!mod.supabase,
+      hasGetCurrentSession: typeof mod.getCurrentSession === 'function',
+      hasPresence: !!mod.__supabaseEnvPresence,
+      envSource: mod.__supabaseEnvSource,
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[Supabase] Failed to import supabaseClient module:', e);
+  }
+
   await hydrateAuthFromSupabase();
 
   const root = ReactDOM.createRoot(document.getElementById('root'));
