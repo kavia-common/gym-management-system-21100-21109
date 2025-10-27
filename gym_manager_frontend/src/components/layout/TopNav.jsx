@@ -4,13 +4,13 @@ import { NavLink, useNavigate, Link } from 'react-router-dom';
 import '../../styles/theme.css';
 import Button from '../ui/Button';
 import { logout } from '../../state/slices/authSlice';
+import { supabase } from '../../lib/supabaseClient';
 
-let supabase = null;
-try {
-  // eslint-disable-next-line global-require
-  supabase = require('../../lib/supabaseClient').supabase;
-} catch {
-  // ignore, show minimal UI
+// One-time defensive warning in development if any code still tries legacy nested access.
+// This does not change behavior; only alerts during dev.
+if (process.env.NODE_ENV !== 'production') {
+  // eslint-disable-next-line no-console
+  console.warn('[Supabase] Ensure no code uses supabaseClient.supabase; use named import: { supabase } from ../../lib/supabaseClient');
 }
 
 /**
