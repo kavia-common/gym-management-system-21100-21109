@@ -4,7 +4,7 @@
   *   import { supabase, getCurrentSession } from '../../lib/supabaseClient';
   * and service modules as named groups below.
   */
-import { supabase, getCurrentSession } from '../../lib/supabaseClient';
+import supabase from '../../lib/supabaseClient';
 import * as bookingsService from './bookings';
 import * as classesService from './classes';
 import * as membersService from './members';
@@ -16,7 +16,6 @@ import * as trainersService from './trainers';
 // Re-export only named symbols. No default export allowed.
 export {
   supabase,
-  getCurrentSession,
   bookingsService,
   classesService,
   membersService,

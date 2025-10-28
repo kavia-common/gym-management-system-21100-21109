@@ -1,5 +1,15 @@
 # Environment Variables
 
+## Supabase (Frontend)
+- REACT_APP_SUPABASE_URL
+- REACT_APP_SUPABASE_ANON_KEY
+
+If using Vite instead of CRA, you can alternatively set:
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_ANON_KEY
+
+The UI will show a banner if these values are not set during development.
+
 This frontend supports both Create React App (CRA) and Vite variable prefixes for Supabase configuration.
 
 The runtime resolution is:

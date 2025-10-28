@@ -12,10 +12,4 @@ declare module '*.svg' {
 declare module '../lib/supabaseClient' {
   export const supabase: SupabaseClient;
   export function getSupabaseClient(): SupabaseClient;
-  export const __supabaseEnvPresence: {
-    CRA: { URL: boolean; ANON_KEY: boolean };
-    VITE: { URL: boolean; ANON_KEY: boolean };
-    NODE: { URL: boolean; ANON_KEY: boolean };
-  };
-  export const __supabaseEnvSource: 'CRA' | 'VITE' | 'NODE' | 'NONE';
 }

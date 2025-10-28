@@ -4,7 +4,7 @@
  * and guards all uses of supabase.auth to avoid null dereference in unconfigured builds.
  */
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { supabase, getCurrentSession, __supabaseEnvPresence, __supabaseEnvSource } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 /**
@@ -58,8 +58,6 @@ export function AuthProvider({ children }) {
         hasClient: !!supabase,
         hasAuth: !!supabase?.auth,
         hasGetSession: typeof supabase?.auth?.getSession === 'function',
-        envSource: __supabaseEnvSource,
-        presence: __supabaseEnvPresence,
       });
     }
 
@@ -67,7 +65,8 @@ export function AuthProvider({ children }) {
 
     (async () => {
       try {
-        const currentSession = await getCurrentSession();
+        const { data } = await supabase?.auth?.getSession?.() || { data: { session: null } };
+        const currentSession = data?.session || null;
         if (!mounted) return;
         setSession(currentSession || null);
         setUser(currentSession?.user || null);

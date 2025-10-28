@@ -1,11 +1,11 @@
 import React from 'react';
 import './App.css';
+import EnvBanner from './components/ui/EnvBanner.jsx';
 import './styles/theme.css';
 import AppRoutes from './routes/AppRoutes';
 import { useDispatch, useSelector } from 'react-redux';
 import { setTheme } from './state/slices/uiSlice';
 import Header from './components/layout/Header.jsx';
-import EnvBanner from './components/ui/EnvBanner';
 
 /**
  * PUBLIC_INTERFACE

@@ -1,62 +1,27 @@
 import React from 'react';
-import { __supabaseEnvPresence, __supabaseEnvSource } from '../../lib/supabaseClient';
+
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 /**
  * PUBLIC_INTERFACE
- * EnvBanner
- * Diagnostic banner to verify Supabase env injection at runtime.
- * Safely reads debug helpers and only renders when envs are missing.
- * It never throws at runtime if helpers or envs are undefined.
+ * A small banner that renders when Supabase env vars are missing.
+ * Helps guide developers in local setup and prevents silent runtime failures.
  */
-function EnvBanner() {
-  // Guard against process being undefined in browser or when not injected
-  const nodeEnv =
-    typeof process !== 'undefined' && process && process.env ? process.env : {};
-  const isProd = nodeEnv.NODE_ENV === 'production';
-
-  // The debug helpers are optional; use safe destructuring and defaults.
-  // Current helpers shape (per supabaseClient.js/ts):
-  // __supabaseEnvPresence: { hasUrl: boolean, hasKey: boolean }
-  // __supabaseEnvSource: { urlSource: string|null, keySource: string|null }
-  const presence = (__supabaseEnvPresence && {
-    hasUrl: Boolean(__supabaseEnvPresence?.hasUrl),
-    hasKey: Boolean(__supabaseEnvPresence?.hasKey),
-  }) || { hasUrl: false, hasKey: false };
-
-  const source = (__supabaseEnvSource && {
-    urlSource: __supabaseEnvSource?.urlSource ?? null,
-    keySource: __supabaseEnvSource?.keySource ?? null,
-  }) || { urlSource: null, keySource: null };
-
-  // Show banner only when some required env is missing.
-  const missing = !presence.hasUrl || !presence.hasKey;
-
-  if (!missing) {
-    // All envs present; keep UI clean
-    return null;
-  }
-
-  const parts = [
-    `URL:${presence.hasUrl ? 'OK' : 'MISSING'}${source.urlSource ? `@${source.urlSource}` : ''}`,
-    `KEY:${presence.hasKey ? 'OK' : 'MISSING'}${source.keySource ? `@${source.keySource}` : ''}`,
-  ];
+export default function EnvBanner() {
+  const missing = !supabaseUrl || !supabaseKey;
+  if (!missing) return null;
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      style={{
-        padding: '6px 12px',
-        background: '#FEF3C7',
-        color: '#92400E',
-        fontSize: 12,
-        borderBottom: '1px solid #F59E0B',
-      }}
-    >
-      <strong>Environment:</strong> {isProd ? 'Production' : 'Development'} |{' '}
-      <strong>Supabase env:</strong> {parts.join(' | ')}. Configure REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY.
+    <div style={{
+      background: '#FEF3C7',
+      color: '#92400E',
+      padding: '8px 12px',
+      fontSize: 14,
+      borderBottom: '1px solid rgba(146,64,14,0.2)'
+    }}>
+      Missing Supabase configuration. Please set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY
+      (or VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY) in your .env file.
     </div>
   );
 }
-
-export default EnvBanner;
